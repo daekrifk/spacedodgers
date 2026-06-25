@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dodge Run – et enkelt arkadespill for intern utviklerkonkurranse">
+    <title>Dodge Run</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+    <div class="game-wrapper">
+        <header class="hud">
+            <div class="hud-left">
+                <h1 class="game-title">Dodge Run</h1>
+                <span class="level-badge" id="level-badge">Level 1</span>
+            </div>
+            <div class="score-block">
+                <span class="score-label">Score</span>
+                <span class="score-value" id="score">0</span>
+            </div>
+        </header>
+
+        <main class="game-area">
+            <canvas id="game-canvas" width="720" height="900" aria-label="Dodge Run spill"></canvas>
+
+            <div class="overlay" id="start-screen">
+                <div class="overlay-card">
+                    <h2>Dodge Run</h2>
+                    <p>Unngå hindringene så lenge du kan. Hvert <strong>400 poeng</strong> = nytt level, raskere tempo og ny bakgrunn.</p>
+                    <div class="controls-hint">
+                        <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd>
+                        <span>eller WASD</span>
+                    </div>
+                    <button class="btn btn-primary" id="start-btn">Start spill</button>
+                </div>
+            </div>
+
+            <div class="overlay hidden" id="gameover-screen">
+                <div class="overlay-card overlay-card-gameover">
+                    <h2>Game Over</h2>
+                    <p class="final-score-big"><span id="final-score">0</span></p>
+                    <p class="final-level">Level <span id="final-level">1</span></p>
+                    <p class="screenshot-hint">Ta screenshot og del scoren!</p>
+                    <button class="btn btn-primary" id="restart-btn">Spill igjen</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="footer">
+        <p>Intern utviklerkonkurranse · Screenshot scoren og del med teamet</p>
+    </footer>
+
+    <script src="js/game.js"></script>
+</body>
+</html>
