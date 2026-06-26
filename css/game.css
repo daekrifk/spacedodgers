@@ -58,7 +58,8 @@ body {
     letter-spacing: -0.02em;
 }
 
-.level-badge {
+.level-badge,
+.powerup-badge {
     font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -69,6 +70,15 @@ body {
     border-radius: 999px;
     border: 1px solid rgba(34, 211, 238, 0.3);
     transition: background 0.4s, color 0.4s, border-color 0.4s;
+}
+
+.powerup-badge.hidden {
+    display: none;
+}
+
+.powerup-hint {
+    font-size: 0.78rem !important;
+    margin-bottom: 0.75rem !important;
 }
 
 .score-block {

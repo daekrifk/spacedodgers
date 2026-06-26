@@ -27,8 +27,19 @@ Hvert **400 poeng** gir nytt level:
 | 3 | Lava | Enda raskere |
 | 4 | Rom | Stjerner i bakgrunnen |
 | 5 | Neon | Maks hastighet |
+| 6 | God Mode | Ultimate challenge |
 
 Flere hindringer spawner, og de beveger seg raskere for hvert level.
+
+### Power-ups (fallende stjerner)
+
+| Stjerne | Effekt | Varighet |
+|---------|--------|----------|
+| Blå | Skjold – tåler treff | 3 sek |
+| Lilla | Mini – mindre hitbox | 5 sek |
+| Gull | God Mode – usårbar | 4 sek |
+
+**Tips:** Å holde seg inntil veggen gir lite score og flere kuber på din side!
 
 ### Score & konkurranse
 
