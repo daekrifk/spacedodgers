@@ -33,11 +33,15 @@ Flere hindringer spawner, og de beveger seg raskere for hvert level.
 
 ### Power-ups (fallende stjerner)
 
+Flere stjerner kan være aktive samtidig – hver effekt har **egen timer** i HUD-en.
+
 | Stjerne | Effekt | Varighet |
 |---------|--------|----------|
-| Blå | Skjold – tåler treff | 3 sek |
+| Blå | Skjold – blokkerer **ett** treff, så ryker det | Maks 3 sek |
 | Lilla | Mini – mindre hitbox | 5 sek |
-| Gull | God Mode – usårbar | 4 sek |
+| Gull | God Mode – usårbar, knuser kuber | 4 sek |
+
+Samme type stjerne **forlenger** timeren (opp til 2×). Alle effekter blinker ca. 1,5 sek før de går ut.
 
 **Tips:** Å holde seg inntil veggen gir lite score og flere kuber på din side!
 

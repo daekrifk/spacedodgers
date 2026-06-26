@@ -49,6 +49,16 @@ body {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.powerup-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
 }
 
 .game-title {
@@ -58,8 +68,19 @@ body {
     letter-spacing: -0.02em;
 }
 
-.level-badge,
 .powerup-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid;
+    white-space: nowrap;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.level-badge {
     font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -72,8 +93,24 @@ body {
     transition: background 0.4s, color 0.4s, border-color 0.4s;
 }
 
-.powerup-badge.hidden {
-    display: none;
+.powerup-badge.powerup-warning {
+    animation: powerup-pulse 0.8s ease-in-out infinite;
+}
+
+.powerup-badge.powerup-critical {
+    animation: powerup-blink 0.35s ease-in-out infinite;
+    border-color: #fef3c7 !important;
+    color: #fef3c7 !important;
+}
+
+@keyframes powerup-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.65; transform: scale(1.04); }
+}
+
+@keyframes powerup-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
 }
 
 .powerup-hint {

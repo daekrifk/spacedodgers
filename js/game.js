@@ -6,7 +6,7 @@
 
     const scoreEl = document.getElementById('score');
     const levelBadgeEl = document.getElementById('level-badge');
-    const powerupBadgeEl = document.getElementById('powerup-badge');
+    const powerupBadgesEl = document.getElementById('powerup-badges');
     const startScreen = document.getElementById('start-screen');
     const gameoverScreen = document.getElementById('gameover-screen');
     const startBtn = document.getElementById('start-btn');
@@ -21,6 +21,8 @@
     const SHRINK_DURATION = 300;
     const GODMODE_DURATION = 240;
     const WALL_CAMP_THRESHOLD = 75;
+    const POWERUP_WARN_START = 90;
+    const POWERUP_WARN_CRITICAL = 45;
 
     const LEVEL_THEMES = [
         { name: 'Level 1 – By', bg: ['#0f172a', '#1e293b'], grid: '#334155', accent: '#22d3ee', obstacle: '#f43f5e' },
@@ -52,10 +54,11 @@
     let powerups = [];
     let particles = [];
     let shake = 0;
-    let activePowerup = null;
-    let powerupTimer = 0;
+    let powerupTimers = { shield: 0, shrink: 0, godmode: 0 };
     let screenFlash = 0;
+    let screenFlashColor = '#fcd34d';
     let crushRings = [];
+    let floatTexts = [];
 
     function getTheme() {
         return LEVEL_THEMES[Math.min(level - 1, LEVEL_THEMES.length - 1)];
@@ -98,13 +101,53 @@
         return 'godmode';
     }
 
+    function hasShield() {
+        return powerupTimers.shield > 0;
+    }
+
+    function hasGodMode() {
+        return powerupTimers.godmode > 0;
+    }
+
+    function hasShrink() {
+        return powerupTimers.shrink > 0;
+    }
+
     function isInvincible() {
-        return activePowerup === 'shield' || activePowerup === 'godmode';
+        return hasShield() || hasGodMode();
     }
 
     function getPlayerSize() {
-        if (activePowerup === 'shrink') return BASE_PLAYER_SIZE * 0.62;
+        if (hasShrink()) return BASE_PLAYER_SIZE * 0.62;
         return BASE_PLAYER_SIZE;
+    }
+
+    function getActivePowerupTypes() {
+        return ['godmode', 'shield', 'shrink'].filter((t) => powerupTimers[t] > 0);
+    }
+
+    function isPowerupWarning(type) {
+        const t = powerupTimers[type];
+        return t > 0 && t <= POWERUP_WARN_START;
+    }
+
+    function isPowerupCritical(type) {
+        const t = powerupTimers[type];
+        return t > 0 && t <= POWERUP_WARN_CRITICAL;
+    }
+
+    function getBlinkAlpha(baseAlpha) {
+        const types = getActivePowerupTypes();
+        const critical = types.some(isPowerupCritical);
+        const warning = types.some(isPowerupWarning);
+        if (critical) return baseAlpha * (0.25 + Math.abs(Math.sin(frame * 0.28)) * 0.75);
+        if (warning) return baseAlpha * (0.5 + Math.abs(Math.sin(frame * 0.14)) * 0.5);
+        return baseAlpha;
+    }
+
+    function clearPowerups() {
+        powerupTimers = { shield: 0, shrink: 0, godmode: 0 };
+        updatePowerupHud();
     }
 
     function resetPlayer() {
@@ -115,9 +158,7 @@
             speed: 5.2,
             trail: [],
         };
-        activePowerup = null;
-        powerupTimer = 0;
-        updatePowerupHud();
+        clearPowerups();
     }
 
     function resetGame() {
@@ -133,24 +174,41 @@
         shake = 0;
         screenFlash = 0;
         crushRings = [];
+        floatTexts = [];
         resetPlayer();
         updateHud();
     }
 
     function updatePowerupHud() {
-        if (!powerupBadgeEl) return;
-        if (!activePowerup) {
-            powerupBadgeEl.classList.add('hidden');
-            powerupBadgeEl.textContent = '';
+        if (!powerupBadgesEl) return;
+        const active = getActivePowerupTypes();
+
+        if (active.length === 0) {
+            powerupBadgesEl.innerHTML = '';
             return;
         }
-        const info = POWERUP_INFO[activePowerup];
-        const secs = Math.ceil(powerupTimer / 60);
-        powerupBadgeEl.classList.remove('hidden');
-        powerupBadgeEl.textContent = `${info.label} ${secs}s`;
-        powerupBadgeEl.style.background = `${info.color}22`;
-        powerupBadgeEl.style.color = info.color;
-        powerupBadgeEl.style.borderColor = `${info.color}55`;
+
+        powerupBadgesEl.innerHTML = active.map((type) => {
+            const info = POWERUP_INFO[type];
+            const secs = Math.max(1, Math.ceil(powerupTimers[type] / 60));
+            const warnClass = isPowerupCritical(type)
+                ? ' powerup-critical'
+                : isPowerupWarning(type)
+                    ? ' powerup-warning'
+                    : '';
+
+            return `<span class="powerup-badge${warnClass}" style="background:${info.color}22;color:${info.color};border-color:${info.color}55">${info.label} ${secs}s</span>`;
+        }).join('');
+    }
+
+    function showFloatText(text, color) {
+        floatTexts.push({
+            text,
+            x: player.x,
+            y: player.y - 28,
+            life: 1,
+            color,
+        });
     }
 
     function updateHud() {
@@ -163,16 +221,52 @@
         updatePowerupHud();
     }
 
+    function flashScreen(color, intensity) {
+        screenFlashColor = color;
+        screenFlash = Math.min(0.4, Math.max(screenFlash, intensity));
+    }
+
+    function breakShield(x, y) {
+        powerupTimers.shield = 0;
+        flashScreen('#38bdf8', 0.28);
+        shake = Math.min(6, shake + 3);
+        spawnParticles(x, y, '#38bdf8', 20);
+        spawnParticles(x, y, '#bae6fd', 14);
+        crushRings.push({ x, y, radius: 8, life: 1, color: '#38bdf8' });
+        crushRings.push({ x: player.x, y: player.y, radius: player.size * 1.4, life: 0.9, color: '#7dd3fc' });
+        updatePowerupHud();
+    }
+
     function activatePowerup(type) {
-        activePowerup = type;
-        powerupTimer = POWERUP_INFO[type].duration;
+        const info = POWERUP_INFO[type];
+        const duration = info.duration;
+        const maxTime = duration * 2;
+        const wasActive = powerupTimers[type] > 0;
+
+        if (wasActive) {
+            powerupTimers[type] = Math.min(maxTime, powerupTimers[type] + duration);
+            showFloatText(`+${info.label}`, info.color);
+        } else {
+            powerupTimers[type] = duration;
+            showFloatText(info.label, info.color);
+        }
+
         player.size = getPlayerSize();
-        spawnParticles(player.x, player.y, POWERUP_INFO[type].color, 30);
+        spawnParticles(player.x, player.y, info.color, 30);
         shake = 4;
+
         if (type === 'godmode') {
-            screenFlash = 0.22;
+            flashScreen('#fcd34d', 0.22);
             crushRings.push({ x: player.x, y: player.y, radius: 20, life: 1, color: '#fcd34d' });
         }
+        if (type === 'shield') {
+            flashScreen('#38bdf8', 0.15);
+            crushRings.push({ x: player.x, y: player.y, radius: player.size * 1.2, life: 0.8, color: '#38bdf8' });
+        }
+        if (type === 'shrink') {
+            flashScreen('#c084fc', 0.12);
+        }
+
         updatePowerupHud();
     }
 
@@ -287,7 +381,7 @@
     }
 
     function triggerGodModeCrush(x, y, obstacleColor) {
-        screenFlash = Math.min(0.38, screenFlash + 0.14);
+        flashScreen('#fcd34d', 0.14);
         shake = Math.min(7, shake + 3);
 
         crushRings.push({ x, y, radius: 10, life: 1, color: '#fef3c7' });
@@ -362,15 +456,30 @@
             updateHud();
         }
 
-        if (activePowerup) {
-            powerupTimer -= dt;
-            if (powerupTimer <= 0) {
-                activePowerup = null;
-                powerupTimer = 0;
-                player.size = BASE_PLAYER_SIZE;
+        if (hasGodMode()) {
+            powerupTimers.godmode -= dt;
+            if (powerupTimers.godmode <= 0) {
+                powerupTimers.godmode = 0;
+                flashScreen('#fcd34d', 0.12);
             }
-            updatePowerupHud();
         }
+        if (hasShield()) {
+            powerupTimers.shield -= dt;
+            if (powerupTimers.shield <= 0) {
+                powerupTimers.shield = 0;
+                flashScreen('#38bdf8', 0.1);
+            }
+        }
+        if (hasShrink()) {
+            powerupTimers.shrink -= dt;
+            if (powerupTimers.shrink <= 0) {
+                powerupTimers.shrink = 0;
+                player.size = BASE_PLAYER_SIZE;
+                flashScreen('#c084fc', 0.1);
+            }
+        }
+
+        player.size = getPlayerSize();
 
         let dx = 0;
         let dy = 0;
@@ -426,15 +535,14 @@
                 obstacles.splice(i, 1);
                 score += camping ? 0 : 1;
             } else if (circleRectOverlap(player.x, player.y, player.size * 0.85, o)) {
-                if (isInvincible()) {
-                    const ox = o.x + o.w / 2;
-                    const oy = o.y + o.h / 2;
-                    if (activePowerup === 'godmode') {
-                        triggerGodModeCrush(ox, oy, o.color);
-                    } else {
-                        spawnParticles(ox, oy, POWERUP_INFO.shield.color, 12);
-                        shake = Math.min(4, shake + 1.5);
-                    }
+                const ox = o.x + o.w / 2;
+                const oy = o.y + o.h / 2;
+
+                if (hasGodMode()) {
+                    triggerGodModeCrush(ox, oy, o.color);
+                    obstacles.splice(i, 1);
+                } else if (hasShield()) {
+                    breakShield(ox, oy);
                     obstacles.splice(i, 1);
                 } else {
                     spawnParticles(player.x, player.y, getTheme().obstacle, 30);
@@ -478,11 +586,19 @@
             if (ring.life <= 0) crushRings.splice(i, 1);
         }
 
+        for (let i = floatTexts.length - 1; i >= 0; i--) {
+            const ft = floatTexts[i];
+            ft.y -= 1.2 * dt;
+            ft.life -= 0.025 * dt;
+            if (ft.life <= 0) floatTexts.splice(i, 1);
+        }
+
         if (screenFlash > 0) {
             screenFlash = Math.max(0, screenFlash - 0.06 * dt);
         }
 
         if (shake > 0) shake *= 0.85;
+        updatePowerupHud();
         updateHud();
     }
 
@@ -580,35 +696,97 @@
     function drawPlayer() {
         const theme = getTheme();
 
-        if (activePowerup === 'shield') {
+        if (hasShield()) {
+            const warn = isPowerupWarning('shield');
+            const crit = isPowerupCritical('shield');
             ctx.save();
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 3;
-            ctx.globalAlpha = 0.5 + Math.sin(frame * 0.15) * 0.3;
+            ctx.strokeStyle = crit ? '#f0f9ff' : '#38bdf8';
+            ctx.lineWidth = crit ? 4 : 3;
+            ctx.globalAlpha = getBlinkAlpha(crit ? 0.9 : warn ? 0.65 : 0.55);
+            ctx.shadowColor = '#38bdf8';
+            ctx.shadowBlur = crit ? 18 : 12;
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.size * 1.35, 0, Math.PI * 2);
             ctx.stroke();
+            if (warn) {
+                ctx.setLineDash([6, 6]);
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = getBlinkAlpha(0.4);
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.size * 1.55, 0, Math.PI * 2);
+                ctx.stroke();
+            }
             ctx.restore();
         }
 
-        if (activePowerup === 'godmode') {
+        if (hasGodMode()) {
+            const warn = isPowerupWarning('godmode');
+            const crit = isPowerupCritical('godmode');
             ctx.save();
             const hue = (frame * 3) % 360;
-            ctx.strokeStyle = `hsl(${hue}, 90%, 60%)`;
-            ctx.lineWidth = 4;
-            ctx.globalAlpha = 0.7;
+            ctx.strokeStyle = crit ? '#fff7ed' : `hsl(${hue}, 90%, 60%)`;
+            ctx.lineWidth = crit ? 5 : 4;
+            ctx.globalAlpha = getBlinkAlpha(crit ? 0.95 : warn ? 0.75 : 0.7);
             ctx.shadowColor = '#fcd34d';
-            ctx.shadowBlur = 20;
+            ctx.shadowBlur = crit ? 26 : 20;
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.size * 1.5, 0, Math.PI * 2);
             ctx.stroke();
+            if (warn) {
+                ctx.strokeStyle = '#fef3c7';
+                ctx.setLineDash([8, 5]);
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = getBlinkAlpha(0.45);
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.size * 1.7, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        if (hasShrink()) {
+            const warn = isPowerupWarning('shrink');
+            const crit = isPowerupCritical('shrink');
+            const s = player.size;
+            const bracket = s * 0.95;
+            const len = s * 0.35;
+            ctx.save();
+            ctx.strokeStyle = crit ? '#f5d0fe' : '#c084fc';
+            ctx.lineWidth = crit ? 3 : 2;
+            ctx.globalAlpha = getBlinkAlpha(warn ? 0.85 : 0.6);
+            ctx.lineCap = 'round';
+
+            const corners = [
+                [-bracket, -bracket, 1, 1],
+                [bracket, -bracket, -1, 1],
+                [-bracket, bracket, 1, -1],
+                [bracket, bracket, -1, -1],
+            ];
+            for (const [cx, cy, dx, dy] of corners) {
+                ctx.beginPath();
+                ctx.moveTo(player.x + cx, player.y + cy);
+                ctx.lineTo(player.x + cx + dx * len, player.y + cy);
+                ctx.moveTo(player.x + cx, player.y + cy);
+                ctx.lineTo(player.x + cx, player.y + cy + dy * len);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#c084fc';
+            ctx.globalAlpha = getBlinkAlpha(0.9);
+            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('MINI', player.x, player.y - s - 10);
             ctx.restore();
         }
 
         for (let i = player.trail.length - 1; i >= 0; i--) {
             const t = player.trail[i];
             const alpha = (1 - i / player.trail.length) * 0.35;
-            ctx.fillStyle = activePowerup === 'godmode' ? '#fcd34d' : theme.accent;
+            let trailColor = theme.accent;
+            if (hasGodMode()) trailColor = '#fcd34d';
+            else if (hasShield()) trailColor = '#38bdf8';
+            else if (hasShrink()) trailColor = '#c084fc';
+            ctx.fillStyle = trailColor;
             ctx.globalAlpha = alpha;
             ctx.beginPath();
             ctx.arc(t.x, t.y, player.size * 0.5 * (1 - i / player.trail.length), 0, Math.PI * 2);
@@ -618,10 +796,27 @@
 
         ctx.save();
         ctx.translate(player.x, player.y);
-        ctx.shadowColor = activePowerup === 'godmode' ? '#fcd34d' : theme.accent;
-        ctx.shadowBlur = activePowerup === 'godmode' ? 24 : 16;
 
-        ctx.fillStyle = activePowerup === 'godmode' ? '#fcd34d' : theme.accent;
+        let bodyColor = theme.accent;
+        let glowColor = theme.accent;
+        let glowBlur = 16;
+        if (hasGodMode()) {
+            bodyColor = '#fcd34d';
+            glowColor = '#fcd34d';
+            glowBlur = 24;
+        } else if (hasShield()) {
+            bodyColor = '#7dd3fc';
+            glowColor = '#38bdf8';
+            glowBlur = 18;
+        } else if (hasShrink()) {
+            bodyColor = '#c084fc';
+            glowColor = '#a855f7';
+            glowBlur = 14;
+        }
+
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = glowBlur;
+        ctx.fillStyle = bodyColor;
         ctx.beginPath();
         ctx.moveTo(0, -player.size * 0.9);
         ctx.lineTo(player.size * 0.75, player.size * 0.6);
@@ -707,7 +902,7 @@
     }
 
     function drawGodModeAmbient() {
-        if (activePowerup !== 'godmode') return;
+        if (!hasGodMode()) return;
 
         const pulse = 0.05 + Math.sin(frame * 0.07) * 0.025;
         const cx = canvas.width / 2;
@@ -732,14 +927,57 @@
 
         const cx = player ? player.x : canvas.width / 2;
         const cy = player ? player.y : canvas.height / 2;
+        const flashMap = {
+            '#fcd34d': (a) => `rgba(252, 211, 77, ${a})`,
+            '#38bdf8': (a) => `rgba(56, 189, 248, ${a})`,
+            '#c084fc': (a) => `rgba(192, 132, 252, ${a})`,
+        };
+        const toRgba = flashMap[screenFlashColor] || flashMap['#fcd34d'];
 
         ctx.save();
         const burst = ctx.createRadialGradient(cx, cy, 0, cx, cy, canvas.width * 0.55);
-        burst.addColorStop(0, `rgba(255, 251, 235, ${screenFlash * 0.45})`);
-        burst.addColorStop(0.35, `rgba(252, 211, 77, ${screenFlash * 0.28})`);
+        burst.addColorStop(0, toRgba(screenFlash * 0.45));
+        burst.addColorStop(0.35, toRgba(screenFlash * 0.28));
         burst.addColorStop(1, 'transparent');
         ctx.fillStyle = burst;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+    }
+
+    function drawFloatTexts() {
+        for (const ft of floatTexts) {
+            ctx.save();
+            ctx.globalAlpha = ft.life;
+            ctx.fillStyle = ft.color;
+            ctx.font = 'bold 13px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = ft.color;
+            ctx.shadowBlur = 8;
+            ctx.fillText(ft.text, ft.x, ft.y);
+            ctx.restore();
+        }
+    }
+
+    function drawPowerupExpireHint() {
+        const active = getActivePowerupTypes().filter(isPowerupWarning);
+        if (active.length === 0) return;
+
+        const critical = active.some(isPowerupCritical);
+        const labels = active.map((t) => {
+            const secs = Math.max(1, Math.ceil(powerupTimers[t] / 60));
+            return `${POWERUP_INFO[t].label} ${secs}s`;
+        });
+
+        ctx.save();
+        ctx.globalAlpha = getBlinkAlpha(critical ? 0.9 : 0.65);
+        ctx.fillStyle = critical ? '#fef3c7' : '#94a3b8';
+        ctx.font = `bold ${critical ? 13 : 11}px "JetBrains Mono", monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(
+            critical ? `⚠ ${labels.join(' · ')} utløper!` : `${labels.join(' · ')} snart ute`,
+            canvas.width / 2,
+            canvas.height - 52
+        );
         ctx.restore();
     }
 
@@ -760,8 +998,10 @@
         drawCrushRings();
         drawLevelBanner();
         drawWallWarning();
+        drawFloatTexts();
         drawGodModeAmbient();
         drawScreenFlash();
+        drawPowerupExpireHint();
 
         ctx.restore();
     }
