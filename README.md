@@ -1,10 +1,28 @@
 # Dodge Run
 
-Et enkelt arkadespill i nettleseren – perfekt for intern utviklerkonkurranse.
+Et enkelt arkadespill i nettleseren med **online leaderboard** via Supabase.
+
+## Kom i gang
+
+### 1. Supabase-oppsett
+
+Følg [`SUPABASE-SETUP.md`](SUPABASE-SETUP.md) for å opprette prosjekt, kjøre SQL og fylle inn `js/config.js`.
+
+### 2. Kjør lokalt
+
+```bash
+npx serve .
+```
+
+Åpne `http://localhost:3000`
+
+### 3. Spill med venner
+
+1. Registrer deg med e-post, passord og visningsnavn
+2. Start spill (krever innlogging)
+3. Score lagres automatisk på leaderboard ved game over
 
 ## Spill
-
-Åpne `index.html` i nettleseren (dobbelklikk eller `npx serve .`).
 
 **Mål:** Unngå hindringene så lenge du kan. Jo lenger du overlever, jo høyere score.
 
@@ -14,7 +32,7 @@ Et enkelt arkadespill i nettleseren – perfekt for intern utviklerkonkurranse.
 |------|----------|
 | `←` `→` `↑` `↓` | Beveg spilleren |
 | `W` `A` `S` `D` | Alternativ bevegelse |
-| `Space` | Start / spill igjen |
+| `Space` | Start / spill igjen (krever innlogging) |
 
 ### Levels
 
@@ -29,53 +47,53 @@ Hvert **400 poeng** gir nytt level:
 | 5 | Neon | Maks hastighet |
 | 6 | God Mode | Ultimate challenge |
 
-Flere hindringer spawner, og de beveger seg raskere for hvert level.
-
 ### Power-ups (fallende stjerner)
-
-Flere stjerner kan være aktive samtidig – hver effekt har **egen timer** i HUD-en.
 
 | Stjerne | Effekt | Varighet |
 |---------|--------|----------|
-| Blå | Skjold – blokkerer **ett** treff, så ryker det | Maks 3 sek |
+| Blå | Skjold – blokkerer **ett** treff | Maks 3 sek |
 | Lilla | Mini – mindre hitbox | 5 sek |
 | Gull | God Mode – usårbar, knuser kuber | 4 sek |
 
-Samme type stjerne **forlenger** timeren (opp til 2×). Alle effekter blinker ca. 1,5 sek før de går ut.
+## Leaderboard
 
-**Tips:** Å holde seg inntil veggen gir lite score og flere kuber på din side!
-
-### Score & konkurranse
-
-Når du taper vises scoren stort på skjermen – ta **screenshot** og del i Slack/Teams.
-
-## Konkurranseidéer
-
-- Høyeste score innen fredag kl. 16:00 vinner
-- Bonuspoeng for å nå Level 4+
-- «Clean run» – ingen skade på 60 sekunder
-- Lag-turnering: beste snitt av 3 forsøk
+- Én **personlig rekord** per bruker (høyeste score telles)
+- Topp 20 vises i sidepanelet
+- Krever innlogging med e-post og passord
 
 ## Teknologi
-
-Ren HTML, CSS og JavaScript – ingen avhengigheter.
 
 ```
 .
 ├── index.html
 ├── css/game.css
-├── js/game.js
-└── README.md
+├── js/
+│   ├── config.js          ← Supabase URL + anon key
+│   ├── auth.js            ← Innlogging
+│   ├── leaderboard.js     ← Score + leaderboard
+│   └── game.js
+├── supabase/
+│   └── schema.sql         ← Database-oppsett
+└── SUPABASE-SETUP.md
 ```
 
-## Utvidelser (ideer til PR)
+- Frontend: ren HTML, CSS, JavaScript
+- Backend: [Supabase](https://supabase.com) (gratis, open source PostgreSQL)
 
-- [ ] Online leaderboard med Firebase/Supabase
-- [ ] Power-ups (skjold, slow-mo)
+## Publisering (senere)
+
+1. Push til GitHub
+2. Aktiver **GitHub Pages** på `main`-branchen
+3. Oppdater Supabase **Site URL** til din live-adresse
+4. Hver `git push` oppdaterer spillet automatisk
+
+## Utvidelser (ideer)
+
 - [ ] Touch-styring for mobil
 - [ ] Lyd og musikk
-- [ ] Daglig challenge-modus
+- [ ] Anti-juks validering (Edge Function)
+- [ ] Ukentlig turnering-modus
 
 ---
 
-Laget for intern konkurranse. Lykke til, og may the best dev win.
+Laget for vennekonkurranse. Lykke til!

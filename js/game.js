@@ -13,6 +13,8 @@
     const restartBtn = document.getElementById('restart-btn');
     const finalScoreEl = document.getElementById('final-score');
     const finalLevelEl = document.getElementById('final-level');
+    const scoreSubmitHint = document.getElementById('score-submit-hint');
+    const loginRequiredHint = document.getElementById('login-required-hint');
 
     const POINTS_PER_LEVEL = 400;
     const WARMUP_FRAMES = 30;
@@ -270,7 +272,21 @@
         updatePowerupHud();
     }
 
+    function canPlay() {
+        return window.Auth?.isLoggedIn() ?? false;
+    }
+
+    function updateLoginHint() {
+        if (!loginRequiredHint) return;
+        loginRequiredHint.classList.toggle('hidden', canPlay());
+    }
+
     function startGame() {
+        if (!canPlay()) {
+            updateLoginHint();
+            return;
+        }
+
         resetGame();
         state = 'playing';
         startScreen.classList.add('hidden');
@@ -279,12 +295,25 @@
         requestAnimationFrame(gameLoop);
     }
 
-    function endGame() {
+    async function endGame() {
         state = 'gameover';
-        finalScoreEl.textContent = Math.floor(score);
+        const finalScore = Math.floor(score);
+        finalScoreEl.textContent = finalScore;
         finalLevelEl.textContent = level;
         gameoverScreen.classList.remove('hidden');
         shake = 12;
+
+        if (scoreSubmitHint) {
+            if (window.Leaderboard?.isLoggedIn()) {
+                scoreSubmitHint.textContent = 'Lagrer score på leaderboard...';
+                const result = await window.Leaderboard.submitScore(finalScore, level);
+                scoreSubmitHint.textContent = result.ok
+                    ? 'Score lagret på leaderboard!'
+                    : 'Kunne ikke lagre score. Prøv igjen.';
+            } else {
+                scoreSubmitHint.textContent = 'Logg inn for å lagre score på leaderboard.';
+            }
+        }
     }
 
     function getSpawnX(w, forceSide) {
@@ -1049,7 +1078,10 @@
     startBtn.addEventListener('click', startGame);
     restartBtn.addEventListener('click', startGame);
 
+    document.addEventListener('auth:changed', updateLoginHint);
+
     resetPlayer();
     drawBackground();
     drawPlayer();
+    updateLoginHint();
 })();
