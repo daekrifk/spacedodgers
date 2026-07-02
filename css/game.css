@@ -31,7 +31,7 @@ body {
     gap: 1.5rem;
     align-items: flex-start;
     justify-content: center;
-    max-width: 1100px;
+    max-width: 1420px;
     margin: 0 auto;
 }
 
@@ -47,6 +47,23 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+}
+
+.chat-sidebar {
+    width: 340px;
+    flex-shrink: 0;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.chat-sidebar .chat-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
 }
 
 .game-wrapper {
@@ -192,6 +209,48 @@ body {
     color: #f87171;
 }
 
+.stats-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stats-status {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin: -0.35rem 0 0.25rem;
+}
+
+.stats-status-error {
+    color: #f87171;
+}
+
+.stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+}
+
+.stats-label {
+    color: var(--muted);
+    flex-shrink: 0;
+}
+
+.stats-value {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--text);
+    text-align: right;
+}
+
 .leaderboard-list {
     list-style: none;
     display: flex;
@@ -280,15 +339,40 @@ body {
     display: none !important;
 }
 
+@media (max-width: 1200px) {
+    .app-shell {
+        flex-wrap: wrap;
+        max-width: 760px;
+    }
+
+    .chat-sidebar {
+        width: 100%;
+        order: 3;
+        align-self: auto;
+    }
+
+    .main-column {
+        order: 1;
+        max-width: 100%;
+    }
+
+    .sidebar-right {
+        width: 100%;
+        order: 2;
+    }
+}
+
 @media (max-width: 960px) {
     .app-shell {
         flex-direction: column;
         align-items: stretch;
+        max-width: none;
     }
 
-    .sidebar {
+    .chat-sidebar,
+    .sidebar-right {
         width: 100%;
-        order: -1;
+        order: unset;
     }
 }
 
@@ -530,4 +614,132 @@ kbd {
     font-size: 0.7rem;
     color: var(--muted);
     text-align: center;
+}
+
+
+.chat-panel {
+    min-height: 0;
+}
+
+.chat-messages {
+    flex: 1;
+    min-height: 420px;
+    max-height: calc(100vh - 10rem);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.chat-empty {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: center;
+    margin: auto 0;
+}
+
+.chat-row {
+    display: flex;
+    width: 100%;
+}
+
+.chat-row-own {
+    justify-content: flex-end;
+}
+
+.chat-row-other {
+    justify-content: flex-start;
+}
+
+.chat-bubble {
+    max-width: 82%;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    padding: 0.4rem 0.65rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.chat-bubble-own {
+    background: rgba(34, 211, 238, 0.12);
+    border-color: rgba(34, 211, 238, 0.3);
+    border-bottom-right-radius: 4px;
+}
+
+.chat-bubble-other {
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom-left-radius: 4px;
+}
+
+.chat-bubble-flame {
+    border-color: rgba(251, 146, 60, 0.4);
+    background: rgba(251, 146, 60, 0.12);
+}
+
+.chat-bubble-flame .chat-message-body {
+    color: #fb923c;
+}
+
+.chat-message-name {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 0.2rem;
+}
+
+.chat-message-name-own {
+    color: var(--accent);
+    text-align: right;
+}
+
+.chat-bubble-own .chat-message-body {
+    color: var(--text);
+}
+
+.chat-message-body {
+    display: block;
+    color: var(--text);
+    word-break: break-word;
+}
+
+.chat-error {
+    font-size: 0.72rem;
+    color: #f87171;
+    margin-bottom: 0.5rem;
+}
+
+.chat-compose {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.chat-input {
+    margin-top: 0;
+}
+
+.chat-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.chat-send-btn,
+.chat-flame-btn {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.78rem;
+}
+
+@media (max-width: 1200px) {
+    .chat-messages {
+        min-height: 260px;
+        max-height: 360px;
+    }
 }

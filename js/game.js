@@ -32,7 +32,11 @@
         { name: 'Level 3 – Lava', bg: ['#450a0a', '#7f1d1d'], grid: '#991b1b', accent: '#fb923c', obstacle: '#fde047' },
         { name: 'Level 4 – Rom', bg: ['#1e1b4b', '#312e81'], grid: '#4338ca', accent: '#a78bfa', obstacle: '#f472b6' },
         { name: 'Level 5 – Neon', bg: ['#0c0a1d', '#1a0a2e'], grid: '#581c87', accent: '#e879f9', obstacle: '#22d3ee' },
-        { name: 'Level 6 – God Mode', bg: ['#1c0a00', '#451a03'], grid: '#b45309', accent: '#fcd34d', obstacle: '#dc2626' },
+        { name: 'Level 6 – Solar Flare', bg: ['#1c0a00', '#451a03'], grid: '#b45309', accent: '#fcd34d', obstacle: '#dc2626' },
+        { name: 'Level 7 – Asteroid Belt', bg: ['#0f1419', '#1a2332'], grid: '#475569', accent: '#94a3b8', obstacle: '#f97316' },
+        { name: 'Level 8 – Nebula', bg: ['#1a0b2e', '#3b0764'], grid: '#6b21a8', accent: '#e879f9', obstacle: '#38bdf8' },
+        { name: 'Level 9 – Deep Space', bg: ['#020617', '#0f172a'], grid: '#1e293b', accent: '#67e8f9', obstacle: '#a855f7' },
+        { name: 'Level 10 – Supernova', bg: ['#0a0014', '#1e0533'], grid: '#4c1d95', accent: '#fde047', obstacle: '#ef4444' },
     ];
 
     const POWERUP_INFO = {
@@ -44,6 +48,7 @@
     const keys = { up: false, down: false, left: false, right: false };
 
     let state = 'menu';
+    let roundStartedAt = 0;
     let score = 0;
     let level = 1;
     let frame = 0;
@@ -67,7 +72,8 @@
     }
 
     function getSpeedMultiplier() {
-        return 1 + (level - 1) * 0.32;
+        if (level <= 6) return 1 + (level - 1) * 0.32;
+        return 2.6 + (level - 6) * 0.1;
     }
 
     function getSpawnInterval() {
@@ -289,6 +295,7 @@
 
         resetGame();
         state = 'playing';
+        roundStartedAt = Date.now();
         startScreen.classList.add('hidden');
         gameoverScreen.classList.add('hidden');
         lastTime = 0;
@@ -304,7 +311,14 @@
         shake = 12;
 
         if (scoreSubmitHint) {
-            if (window.Leaderboard?.isLoggedIn()) {
+            if (window.Stats?.recordGameRun && window.Auth?.isLoggedIn()) {
+                scoreSubmitHint.textContent = 'Lagrer score og statistikk...';
+                const durationSec = Math.max(1, Math.round((Date.now() - roundStartedAt) / 1000));
+                const result = await window.Stats.recordGameRun(finalScore, level, durationSec);
+                scoreSubmitHint.textContent = result.ok
+                    ? 'Score lagret på leaderboard!'
+                    : 'Kunne ikke lagre score. Prøv igjen.';
+            } else if (window.Leaderboard?.isLoggedIn()) {
                 scoreSubmitHint.textContent = 'Lagrer score på leaderboard...';
                 const result = await window.Leaderboard.submitScore(finalScore, level);
                 scoreSubmitHint.textContent = result.ok
@@ -674,7 +688,8 @@
 
         if (level >= 4) {
             ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            for (let i = 0; i < 30; i++) {
+            const starCount = level >= 9 ? 55 : level >= 7 ? 42 : 30;
+            for (let i = 0; i < starCount; i++) {
                 const sx = (i * 137 + frame * 0.2) % canvas.width;
                 const sy = (i * 89 + frame * 0.05 * (i % 3)) % canvas.height;
                 ctx.globalAlpha = 0.3 + (i % 5) * 0.1;
@@ -685,15 +700,31 @@
 
         if (level >= 6) {
             ctx.save();
-            ctx.globalAlpha = 0.08 + Math.sin(frame * 0.04) * 0.04;
             const glow = ctx.createRadialGradient(
                 canvas.width / 2, canvas.height / 2, 50,
                 canvas.width / 2, canvas.height / 2, 500
             );
-            glow.addColorStop(0, '#fcd34d');
+            const glowColor = level >= 10 ? '#fde047' : level >= 8 ? '#c084fc' : '#fcd34d';
+            const glowAlpha = level >= 10 ? 0.14 : level >= 8 ? 0.1 : 0.08;
+            ctx.globalAlpha = glowAlpha + Math.sin(frame * 0.04) * 0.04;
+            glow.addColorStop(0, glowColor);
             glow.addColorStop(1, 'transparent');
             ctx.fillStyle = glow;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        }
+
+        if (level >= 7) {
+            ctx.save();
+            ctx.globalAlpha = 0.06;
+            ctx.fillStyle = '#64748b';
+            for (let i = 0; i < 8 + level; i++) {
+                const ax = (i * 211 + frame * 0.15) % canvas.width;
+                const ay = (i * 157 + frame * 0.35) % canvas.height;
+                ctx.beginPath();
+                ctx.arc(ax, ay, 2 + (i % 3), 0, Math.PI * 2);
+                ctx.fill();
+            }
             ctx.restore();
         }
     }

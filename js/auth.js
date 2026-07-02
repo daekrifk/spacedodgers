@@ -5,6 +5,8 @@
     let supabase = null;
     let currentUser = null;
     let authMode = 'register';
+    let authReady = false;
+    const authReadyWaiters = [];
 
     const authLoggedOut = document.getElementById('auth-logged-out');
     const authLoggedIn = document.getElementById('auth-logged-in');
@@ -117,7 +119,7 @@
         if (user) {
             authLoggedOut.classList.add('hidden');
             authLoggedIn.classList.remove('hidden');
-            if (authUserName) authUserName.textContent = getDisplayName(user);
+            if (authUserName) window.Sanitize?.setTextContent(authUserName, getDisplayName(user));
         } else {
             authLoggedOut.classList.remove('hidden');
             authLoggedIn.classList.add('hidden');
@@ -137,11 +139,23 @@
         return currentUser;
     }
 
+    function whenReady() {
+        if (authReady) return Promise.resolve();
+        return new Promise((resolve) => authReadyWaiters.push(resolve));
+    }
+
+    function markAuthReady() {
+        if (authReady) return;
+        authReady = true;
+        authReadyWaiters.splice(0).forEach((resolve) => resolve());
+    }
+
     async function init() {
         const client = getClient();
         if (!client) {
             updateUI(null);
             setAuthMode('register');
+            markAuthReady();
             return;
         }
 
@@ -153,6 +167,7 @@
         });
 
         setAuthMode('register');
+        markAuthReady();
     }
 
     async function signIn() {
@@ -201,8 +216,9 @@
             return;
         }
 
-        if (!displayName) {
-            showError('Fyll inn visningsnavn.');
+        const nameCheck = window.Sanitize?.validateDisplayName(displayName);
+        if (!nameCheck?.ok) {
+            showError(nameCheck?.error || 'Ugyldig visningsnavn.');
             return;
         }
 
@@ -216,7 +232,7 @@
             email,
             password,
             options: {
-                data: { display_name: displayName }
+                data: { display_name: nameCheck.value }
             }
         });
         registerBtn.disabled = false;
@@ -262,6 +278,7 @@
 
     window.Auth = {
         init,
+        whenReady,
         isLoggedIn,
         getUser,
         getDisplayName,

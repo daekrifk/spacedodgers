@@ -18,30 +18,44 @@
     function renderRows(rows) {
         if (!leaderboardList) return;
 
+        leaderboardList.replaceChildren();
+
         if (!rows.length) {
-            leaderboardList.innerHTML = '<li class="leaderboard-empty">Ingen scores ennå – vær først!</li>';
+            const li = document.createElement('li');
+            li.className = 'leaderboard-empty';
+            li.textContent = 'Ingen scores ennå – vær først!';
+            leaderboardList.appendChild(li);
             return;
         }
 
-        leaderboardList.innerHTML = rows.map((row, index) => {
+        rows.forEach((row, index) => {
             const rank = index + 1;
-            const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
-            return `
-                <li class="leaderboard-row">
-                    <span class="leaderboard-rank">${medal}</span>
-                    <span class="leaderboard-name">${escapeHtml(row.display_name)}</span>
-                    <span class="leaderboard-score">${row.score}</span>
-                    <span class="leaderboard-level">Lv ${row.level}</span>
-                </li>
-            `;
-        }).join('');
+            const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
+
+            const li = document.createElement('li');
+            li.className = 'leaderboard-row';
+
+            const rankEl = document.createElement('span');
+            rankEl.className = 'leaderboard-rank';
+            rankEl.textContent = medal;
+
+            const nameEl = document.createElement('span');
+            nameEl.className = 'leaderboard-name';
+            window.Sanitize.setTextContent(nameEl, row.display_name);
+
+            const scoreEl = document.createElement('span');
+            scoreEl.className = 'leaderboard-score';
+            scoreEl.textContent = String(row.score);
+
+            const levelEl = document.createElement('span');
+            levelEl.className = 'leaderboard-level';
+            levelEl.textContent = 'Lv ' + row.level;
+
+            li.append(rankEl, nameEl, scoreEl, levelEl);
+            leaderboardList.appendChild(li);
+        });
     }
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
 
     async function fetchLeaderboard() {
         const client = window.Auth?.getClient();

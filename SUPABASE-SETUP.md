@@ -108,6 +108,32 @@ Dette oppretter:
 
 Du kan verifisere under **Table Editor** – da skal `profiles` og `scores` vises.
 
+### Spillerstatistikk (valgfritt, for statistikk-panelet)
+
+1. **SQL Editor → New query**
+2. Kopier **hele** [`supabase/stats.sql`](supabase/stats.sql)
+3. Klikk **Run**
+
+Dette oppretter `player_stats` og `finish_game_run()` som lagrer både leaderboard og aggregert statistikk per runde.
+
+### Chat (valgfritt)
+
+1. **SQL Editor → New query**
+2. Kopier **hele** [`supabase/chat.sql`](supabase/chat.sql)
+3. Klikk **Run**
+
+---
+
+## Nullstill spilldata (start leaderboard/stats/chat på nytt)
+
+1. **SQL Editor → New query**
+2. Kopier **hele** [`supabase/reset-data.sql`](supabase/reset-data.sql)
+3. Klikk **Run**
+
+Dette tømmer scores, statistikk og chat. **Innlogging beholdes** – samme brukere kan registrere seg og spille igjen.
+
+For å slette **alle brukere** også: **Authentication → Users** → slett brukerne der (cascade sletter alt i databasen).
+
 ---
 
 ## 7. Test lokalt
