@@ -183,6 +183,54 @@ body {
     color: var(--accent);
 }
 
+.community-panel {
+    margin: 0.85rem 0 1rem;
+    padding: 0.85rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.community-title {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 0.55rem;
+}
+
+.community-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.community-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: 0.76rem;
+}
+
+.community-label {
+    color: var(--muted);
+}
+
+.community-value {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.community-status {
+    margin-top: 0.45rem;
+    font-size: 0.68rem;
+    color: var(--muted);
+}
+
 .config-warning {
     font-size: 0.75rem;
     color: #fbbf24;

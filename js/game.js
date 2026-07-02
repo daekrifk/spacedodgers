@@ -296,6 +296,7 @@
         resetGame();
         state = 'playing';
         roundStartedAt = Date.now();
+        window.Community?.setPlaying(true);
         startScreen.classList.add('hidden');
         gameoverScreen.classList.add('hidden');
         lastTime = 0;
@@ -304,6 +305,7 @@
 
     async function endGame() {
         state = 'gameover';
+        window.Community?.setPlaying(false);
         const finalScore = Math.floor(score);
         finalScoreEl.textContent = finalScore;
         finalLevelEl.textContent = level;
@@ -315,9 +317,13 @@
                 scoreSubmitHint.textContent = 'Lagrer score og statistikk...';
                 const durationSec = Math.max(1, Math.round((Date.now() - roundStartedAt) / 1000));
                 const result = await window.Stats.recordGameRun(finalScore, level, durationSec);
-                scoreSubmitHint.textContent = result.ok
-                    ? 'Score lagret på leaderboard!'
-                    : 'Kunne ikke lagre score. Prøv igjen.';
+                if (result.ok && result.warning) {
+                    scoreSubmitHint.textContent = result.warning;
+                } else {
+                    scoreSubmitHint.textContent = result.ok
+                        ? 'Score og statistikk lagret!'
+                        : 'Kunne ikke lagre score. Prøv igjen.';
+                }
             } else if (window.Leaderboard?.isLoggedIn()) {
                 scoreSubmitHint.textContent = 'Lagrer score på leaderboard...';
                 const result = await window.Leaderboard.submitScore(finalScore, level);
@@ -1098,7 +1104,16 @@
         requestAnimationFrame(gameLoop);
     }
 
+    function isTypingInForm() {
+        const el = document.activeElement;
+        if (!el) return false;
+        const tag = el.tagName;
+        return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+    }
+
     document.addEventListener('keydown', (e) => {
+        if (isTypingInForm()) return;
+
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
             e.preventDefault();
         }
@@ -1113,6 +1128,8 @@
     });
 
     document.addEventListener('keyup', (e) => {
+        if (isTypingInForm()) return;
+
         if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.up = false;
         if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = false;
         if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;

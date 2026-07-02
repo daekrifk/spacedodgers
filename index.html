@@ -78,28 +78,46 @@
                     Supabase er ikke konfigurert. Kopier <code>js/config.example.js</code> til <code>js/config.js</code> – se <code>SUPABASE-SETUP.md</code>.
                 </p>
                 <div id="auth-logged-out">
-                    <p class="auth-mode-title" id="auth-mode-title">Registrer</p>
+                    <p class="auth-mode-title" id="auth-mode-title">Logg inn</p>
                     <label class="field-label" for="auth-email">E-post</label>
                     <input class="field-input" type="email" id="auth-email" autocomplete="email" placeholder="deg@epost.no">
                     <label class="field-label" for="auth-password">Passord</label>
                     <input class="field-input" type="password" id="auth-password" autocomplete="current-password" placeholder="********">
-                    <div id="auth-display-name-row">
+                    <div id="auth-display-name-row" class="hidden">
                         <label class="field-label" for="auth-display-name">Visningsnavn</label>
                         <input class="field-input" type="text" id="auth-display-name" autocomplete="nickname" placeholder="Ditt spillernavn" maxlength="24">
                     </div>
                     <p class="auth-message auth-error hidden" id="auth-error"></p>
                     <p class="auth-message auth-success hidden" id="auth-success"></p>
-                    <div class="auth-actions" id="auth-register-actions">
-                        <button class="btn btn-primary" id="register-btn" type="button">Registrer</button>
-                        <button class="btn btn-link" id="show-login-btn" type="button">Har du konto? Logg inn</button>
-                    </div>
-                    <div class="auth-actions hidden" id="auth-login-actions">
+                    <div class="auth-actions" id="auth-login-actions">
                         <button class="btn btn-primary" id="login-btn" type="button">Logg inn</button>
                         <button class="btn btn-link" id="show-register-btn" type="button">Ny bruker? Registrer deg</button>
+                    </div>
+                    <div class="auth-actions hidden" id="auth-register-actions">
+                        <button class="btn btn-primary" id="register-btn" type="button">Registrer</button>
+                        <button class="btn btn-link" id="show-login-btn" type="button">Har du konto? Logg inn</button>
                     </div>
                 </div>
                 <div id="auth-logged-in" class="hidden">
                     <p class="auth-greeting">Hei, <strong id="auth-user-name">Spiller</strong>!</p>
+                    <div class="community-panel hidden" id="community-panel">
+                        <p class="community-title">Aktivitet nå</p>
+                        <div class="community-grid">
+                            <div class="community-row">
+                                <span class="community-label">Registrerte spillere</span>
+                                <span class="community-value" id="community-total">–</span>
+                            </div>
+                            <div class="community-row">
+                                <span class="community-label">Online nå</span>
+                                <span class="community-value" id="community-online">–</span>
+                            </div>
+                            <div class="community-row">
+                                <span class="community-label">Spiller nå</span>
+                                <span class="community-value" id="community-playing">–</span>
+                            </div>
+                        </div>
+                        <p class="community-status" id="community-status"></p>
+                    </div>
                     <button class="btn btn-secondary" id="logout-btn" type="button">Logg ut</button>
                 </div>
             </section>
@@ -126,6 +144,7 @@
     <script src="js/auth.js"></script>
     <script src="js/leaderboard.js"></script>
     <script src="js/stats.js"></script>
+    <script src="js/community.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/game.js"></script>
 </body>

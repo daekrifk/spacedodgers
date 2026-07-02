@@ -4,7 +4,7 @@
     const config = window.SUPABASE_CONFIG;
     let supabase = null;
     let currentUser = null;
-    let authMode = 'register';
+    let authMode = 'login';
     let authReady = false;
     const authReadyWaiters = [];
 
@@ -123,7 +123,7 @@
         } else {
             authLoggedOut.classList.remove('hidden');
             authLoggedIn.classList.add('hidden');
-            setAuthMode('register');
+            setAuthMode('login');
         }
 
         document.dispatchEvent(new CustomEvent('auth:changed', {
@@ -154,7 +154,7 @@
         const client = getClient();
         if (!client) {
             updateUI(null);
-            setAuthMode('register');
+            setAuthMode('login');
             markAuthReady();
             return;
         }
@@ -166,7 +166,7 @@
             updateUI(session?.user ?? null);
         });
 
-        setAuthMode('register');
+        setAuthMode('login');
         markAuthReady();
     }
 

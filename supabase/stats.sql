@@ -12,6 +12,8 @@ create table if not exists public.player_stats (
 
 alter table public.player_stats enable row level security;
 
+drop policy if exists "player_stats_select_own" on public.player_stats;
+
 create policy "player_stats_select_own"
     on public.player_stats
     for select
@@ -74,6 +76,31 @@ end;
 $$;
 
 grant execute on function public.finish_game_run(integer, integer, integer) to authenticated;
+
+-- Opprett tom stats-rad for innlogget bruker (f.eks. konto fra før stats fantes)
+create or replace function public.ensure_player_stats()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+    if auth.uid() is null then
+        raise exception 'Not authenticated';
+    end if;
+
+    insert into public.player_stats (user_id)
+    values (auth.uid())
+    on conflict (user_id) do nothing;
+end;
+$$;
+
+grant execute on function public.ensure_player_stats() to authenticated;
+
+-- Backfill: alle eksisterende profiler får stats-rad
+insert into public.player_stats (user_id)
+select id from public.profiles
+on conflict (user_id) do nothing;
 
 -- Opprett player_stats-rad for nye brukere
 create or replace function public.handle_new_user()

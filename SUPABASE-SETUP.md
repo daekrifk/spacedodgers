@@ -116,11 +116,21 @@ Du kan verifisere under **Table Editor** – da skal `profiles` og `scores` vise
 
 Dette oppretter `player_stats` og `finish_game_run()` som lagrer både leaderboard og aggregert statistikk per runde.
 
+Hvis **kun personlig rekord** oppdateres (runder spilt står på 0): kjør også [`supabase/stats-fix.sql`](supabase/stats-fix.sql), eller kjør `stats.sql` på nytt.
+
 ### Chat (valgfritt)
 
 1. **SQL Editor → New query**
 2. Kopier **hele** [`supabase/chat.sql`](supabase/chat.sql)
 3. Klikk **Run**
+
+### Online-telling (valgfritt, for aktivitetspanelet)
+
+1. **SQL Editor → New query**
+2. Kopier **hele** [`supabase/presence.sql`](supabase/presence.sql)
+3. Klikk **Run**
+
+Viser kun tall: registrerte spillere, online nå, og hvor mange som spiller akkurat nå.
 
 ---
 

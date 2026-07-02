@@ -102,6 +102,15 @@
         setStatus('');
     }
 
+    async function ensurePlayerStatsRow() {
+        const client = getClient();
+        if (!client || !window.Auth?.isLoggedIn()) return;
+        const { error } = await client.rpc('ensure_player_stats');
+        if (error) {
+            console.warn('ensure_player_stats failed:', error.message);
+        }
+    }
+
     async function fetchStats() {
         const client = getClient();
         if (!client || !window.Auth?.isLoggedIn()) {
@@ -114,6 +123,8 @@
             hidePanel();
             return null;
         }
+
+        await ensurePlayerStatsRow();
 
         setStatus('Laster...');
 
@@ -153,6 +164,8 @@
             return { ok: false, reason: 'not_logged_in' };
         }
 
+        await ensurePlayerStatsRow();
+
         const safeDuration = Math.max(1, Math.min(86400, Math.round(durationSec)));
 
         const { error } = await client.rpc('finish_game_run', {
@@ -163,6 +176,19 @@
 
         if (error) {
             console.error('finish_game_run failed:', error);
+
+            if (window.Leaderboard?.submitScore) {
+                const fallback = await window.Leaderboard.submitScore(score, level);
+                if (fallback.ok) {
+                    await window.Leaderboard.fetchLeaderboard();
+                    await fetchStats();
+                    return {
+                        ok: true,
+                        warning: 'Leaderboard lagret, men statistikk-DB mangler. Kjør stats.sql i Supabase.',
+                    };
+                }
+            }
+
             return { ok: false, reason: error.message };
         }
 

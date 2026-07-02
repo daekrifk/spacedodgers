@@ -193,13 +193,24 @@
     if (chatSendBtn) chatSendBtn.addEventListener('click', () => sendMessage(chatInput?.value ?? '', false));
     if (chatFlameBtn) chatFlameBtn.addEventListener('click', () => sendMessage('', true));
     if (chatInput) chatInput.addEventListener('keydown', (e) => {
+        e.stopPropagation();
         if (e.key === 'Enter') { e.preventDefault(); sendMessage(chatInput.value, false); }
     });
+
+    function syncWithAuth() {
+        if (window.Auth?.isLoggedIn()) {
+            startChat(window.Auth.getUser());
+        } else {
+            stopChat();
+        }
+    }
 
     document.addEventListener('auth:changed', (e) => {
         if (e.detail?.user) startChat(e.detail.user);
         else stopChat();
     });
+
+    window.Auth?.whenReady?.().then(syncWithAuth);
 
     window.Chat = { startChat, stopChat, sendMessage };
 })();
