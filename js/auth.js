@@ -4,18 +4,24 @@
     const config = window.SUPABASE_CONFIG;
     let supabase = null;
     let currentUser = null;
+    let authMode = 'register';
 
     const authLoggedOut = document.getElementById('auth-logged-out');
     const authLoggedIn = document.getElementById('auth-logged-in');
+    const authModeTitle = document.getElementById('auth-mode-title');
     const authEmail = document.getElementById('auth-email');
     const authPassword = document.getElementById('auth-password');
     const authDisplayName = document.getElementById('auth-display-name');
     const authDisplayNameRow = document.getElementById('auth-display-name-row');
+    const authRegisterActions = document.getElementById('auth-register-actions');
+    const authLoginActions = document.getElementById('auth-login-actions');
     const authError = document.getElementById('auth-error');
     const authSuccess = document.getElementById('auth-success');
     const authUserName = document.getElementById('auth-user-name');
     const loginBtn = document.getElementById('login-btn');
     const registerBtn = document.getElementById('register-btn');
+    const showLoginBtn = document.getElementById('show-login-btn');
+    const showRegisterBtn = document.getElementById('show-register-btn');
     const logoutBtn = document.getElementById('logout-btn');
     const configWarning = document.getElementById('config-warning');
 
@@ -37,9 +43,35 @@
     function getClient() {
         if (!isConfigured()) return null;
         if (!supabase && window.supabase) {
-            supabase = window.supabase.createClient(config.url, getPublishableKey());
+            supabase = window.supabase.createClient(config.url, getPublishableKey(), {
+                auth: {
+                    detectSessionInUrl: true
+                }
+            });
         }
         return supabase;
+    }
+
+    function setAuthMode(mode) {
+        authMode = mode;
+        const isRegister = mode === 'register';
+
+        if (authModeTitle) {
+            authModeTitle.textContent = isRegister ? 'Registrer' : 'Logg inn';
+        }
+        if (authDisplayNameRow) {
+            authDisplayNameRow.classList.toggle('hidden', !isRegister);
+        }
+        if (authRegisterActions) {
+            authRegisterActions.classList.toggle('hidden', !isRegister);
+        }
+        if (authLoginActions) {
+            authLoginActions.classList.toggle('hidden', isRegister);
+        }
+        if (authPassword) {
+            authPassword.autocomplete = isRegister ? 'new-password' : 'current-password';
+        }
+        clearMessages();
     }
 
     function showError(message) {
@@ -89,6 +121,7 @@
         } else {
             authLoggedOut.classList.remove('hidden');
             authLoggedIn.classList.add('hidden');
+            setAuthMode('register');
         }
 
         document.dispatchEvent(new CustomEvent('auth:changed', {
@@ -108,6 +141,7 @@
         const client = getClient();
         if (!client) {
             updateUI(null);
+            setAuthMode('register');
             return;
         }
 
@@ -117,6 +151,8 @@
         client.auth.onAuthStateChange((_event, session) => {
             updateUI(session?.user ?? null);
         });
+
+        setAuthMode('register');
     }
 
     async function signIn() {
@@ -166,7 +202,7 @@
         }
 
         if (!displayName) {
-            showError('Fyll inn visningsnavn for registrering.');
+            showError('Fyll inn visningsnavn.');
             return;
         }
 
@@ -191,6 +227,7 @@
         }
 
         if (data.user && !data.session) {
+            setAuthMode('login');
             showSuccess('Konto opprettet! Sjekk e-posten for bekreftelse, deretter logg inn.');
             return;
         }
@@ -207,20 +244,23 @@
         logoutBtn.disabled = true;
         await client.auth.signOut();
         logoutBtn.disabled = false;
-        showSuccess('Logget ut.');
     }
 
     if (loginBtn) loginBtn.addEventListener('click', signIn);
     if (registerBtn) registerBtn.addEventListener('click', signUp);
+    if (showLoginBtn) showLoginBtn.addEventListener('click', () => setAuthMode('login'));
+    if (showRegisterBtn) showRegisterBtn.addEventListener('click', () => setAuthMode('register'));
     if (logoutBtn) logoutBtn.addEventListener('click', signOut);
 
     if (authPassword) {
         authPassword.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') signIn();
+            if (e.key !== 'Enter') return;
+            if (authMode === 'register') signUp();
+            else signIn();
         });
     }
 
-  window.Auth = {
+    window.Auth = {
         init,
         isLoggedIn,
         getUser,

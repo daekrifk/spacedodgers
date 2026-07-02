@@ -25,20 +25,28 @@ jobs:
 
       - name: Generate config.js from secrets
         run: |
-          cat > js/config.js <<EOF
+          cat > js/config.js <<'EOF'
           window.SUPABASE_CONFIG = {
               url: '${{ secrets.SUPABASE_URL }}',
               publishableKey: '${{ secrets.SUPABASE_PUBLISHABLE_KEY }}'
           };
           EOF
 
+      - name: Prepare site files
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          cp -r css js _site/
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment

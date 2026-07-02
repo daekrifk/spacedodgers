@@ -109,11 +109,37 @@ body {
     border-color: rgba(34, 211, 238, 0.5);
 }
 
+.auth-mode-title {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+}
+
 .auth-actions {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     margin-top: 1rem;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 0.78rem;
+    padding: 0.35rem;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    width: 100%;
+}
+
+.btn-link:hover {
+    color: var(--accent);
+    transform: none;
 }
 
 .auth-message {

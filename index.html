@@ -69,6 +69,8 @@
                 </p>
 
                 <div id="auth-logged-out">
+                    <p class="auth-mode-title" id="auth-mode-title">Registrer</p>
+
                     <label class="field-label" for="auth-email">E-post</label>
                     <input class="field-input" type="email" id="auth-email" autocomplete="email" placeholder="deg@epost.no">
 
@@ -76,16 +78,21 @@
                     <input class="field-input" type="password" id="auth-password" autocomplete="current-password" placeholder="••••••••">
 
                     <div id="auth-display-name-row">
-                        <label class="field-label" for="auth-display-name">Visningsnavn (registrering)</label>
+                        <label class="field-label" for="auth-display-name">Visningsnavn</label>
                         <input class="field-input" type="text" id="auth-display-name" autocomplete="nickname" placeholder="Ditt spillernavn" maxlength="24">
                     </div>
 
                     <p class="auth-message auth-error hidden" id="auth-error"></p>
                     <p class="auth-message auth-success hidden" id="auth-success"></p>
 
-                    <div class="auth-actions">
+                    <div class="auth-actions" id="auth-register-actions">
+                        <button class="btn btn-primary" id="register-btn" type="button">Registrer</button>
+                        <button class="btn btn-link" id="show-login-btn" type="button">Har du konto? Logg inn</button>
+                    </div>
+
+                    <div class="auth-actions hidden" id="auth-login-actions">
                         <button class="btn btn-primary" id="login-btn" type="button">Logg inn</button>
-                        <button class="btn btn-secondary" id="register-btn" type="button">Registrer</button>
+                        <button class="btn btn-link" id="show-register-btn" type="button">Ny bruker? Registrer deg</button>
                     </div>
                 </div>
 
