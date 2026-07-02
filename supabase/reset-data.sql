@@ -4,6 +4,7 @@
 -- Brukerkontoer (e-post / innlogging) beholdes – se nederst for full reset.
 
 delete from public.chat_messages;
+delete from public.player_presence;
 delete from public.scores;
 delete from public.player_stats;
 

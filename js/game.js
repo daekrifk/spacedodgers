@@ -80,6 +80,16 @@
         return Math.max(36, 76 - level * 16);
     }
 
+    function getShieldBreakBonus() {
+        return Math.min(level, 10) * 10;
+    }
+
+    function getPlayerSpeed() {
+        const base = 5.2;
+        if (level <= 5) return base;
+        return base + (level - 5) * 0.45;
+    }
+
     function getExtraSpawnChance() {
         if (level < 2) return 0.12;
         return 0.28 + level * 0.07;
@@ -163,7 +173,7 @@
             x: canvas.width / 2,
             y: canvas.height - 100,
             size: BASE_PLAYER_SIZE,
-            speed: 5.2,
+            speed: getPlayerSpeed(),
             trail: [],
         };
         clearPowerups();
@@ -514,6 +524,7 @@
         const newLevel = Math.floor(score / POINTS_PER_LEVEL) + 1;
         if (newLevel > level && newLevel <= LEVEL_THEMES.length) {
             level = newLevel;
+            player.speed = getPlayerSpeed();
             spawnParticles(player.x, player.y, getTheme().accent, 20);
             updateHud();
         }
@@ -604,7 +615,10 @@
                     triggerGodModeCrush(ox, oy, o.color);
                     obstacles.splice(i, 1);
                 } else if (hasShield()) {
+                    const bonus = getShieldBreakBonus();
+                    score += bonus;
                     breakShield(ox, oy);
+                    showFloatText('+' + bonus, '#38bdf8');
                     obstacles.splice(i, 1);
                 } else {
                     spawnParticles(player.x, player.y, getTheme().obstacle, 30);
