@@ -436,13 +436,26 @@
         }
     }
 
-    function circleRectOverlap(cx, cy, radius, rect) {
+    function circleRotatedRectOverlap(cx, cy, radius, rect) {
         const pad = 2;
-        const closestX = Math.max(rect.x + pad, Math.min(cx, rect.x + rect.w - pad));
-        const closestY = Math.max(rect.y + pad, Math.min(cy, rect.y + rect.h - pad));
-        const dx = cx - closestX;
-        const dy = cy - closestY;
-        return dx * dx + dy * dy < (radius - pad) * (radius - pad);
+        const cos = Math.cos(-rect.rot);
+        const sin = Math.sin(-rect.rot);
+        const centerX = rect.x + rect.w / 2;
+        const centerY = rect.y + rect.h / 2;
+
+        const dx = cx - centerX;
+        const dy = cy - centerY;
+        const localX = dx * cos - dy * sin;
+        const localY = dx * sin + dy * cos;
+
+        const halfW = rect.w / 2;
+        const halfH = rect.h / 2;
+        const closestX = Math.max(-halfW + pad, Math.min(localX, halfW - pad));
+        const closestY = Math.max(-halfH + pad, Math.min(localY, halfH - pad));
+        const distX = localX - closestX;
+        const distY = localY - closestY;
+        const effectiveRadius = Math.max(0, radius - pad);
+        return distX * distX + distY * distY < effectiveRadius * effectiveRadius;
     }
 
     function circleCircleOverlap(cx1, cy1, r1, cx2, cy2, r2) {
@@ -563,7 +576,7 @@
             if (o.y > canvas.height + 50) {
                 obstacles.splice(i, 1);
                 score += camping ? 0 : 1;
-            } else if (circleRectOverlap(player.x, player.y, player.size * 0.85, o)) {
+            } else if (circleRotatedRectOverlap(player.x, player.y, player.size * 0.85, o)) {
                 const ox = o.x + o.w / 2;
                 const oy = o.y + o.h / 2;
 

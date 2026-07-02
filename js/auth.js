@@ -19,18 +19,25 @@
     const logoutBtn = document.getElementById('logout-btn');
     const configWarning = document.getElementById('config-warning');
 
+    function getPublishableKey() {
+        return config?.publishableKey || config?.anonKey;
+    }
+
     function isConfigured() {
+        const key = getPublishableKey();
         return config
             && config.url
-            && config.anonKey
+            && key
+            && !config.url.includes('DITT-PROSJEKT')
             && !config.url.includes('YOUR_SUPABASE')
-            && !config.anonKey.includes('YOUR_SUPABASE');
+            && !key.includes('DIN_PUBLISHABLE')
+            && !key.includes('YOUR_SUPABASE');
     }
 
     function getClient() {
         if (!isConfigured()) return null;
         if (!supabase && window.supabase) {
-            supabase = window.supabase.createClient(config.url, config.anonKey);
+            supabase = window.supabase.createClient(config.url, getPublishableKey());
         }
         return supabase;
     }

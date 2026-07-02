@@ -1,99 +1,54 @@
 # Dodge Run
 
-Et enkelt arkadespill i nettleseren med **online leaderboard** via Supabase.
-
-## Kom i gang
-
-### 1. Supabase-oppsett
-
-Følg [`SUPABASE-SETUP.md`](SUPABASE-SETUP.md) for å opprette prosjekt, kjøre SQL og fylle inn `js/config.js`.
-
-### 2. Kjør lokalt
-
-```bash
-npx serve .
-```
-
-Åpne `http://localhost:3000`
-
-### 3. Spill med venner
-
-1. Registrer deg med e-post, passord og visningsnavn
-2. Start spill (krever innlogging)
-3. Score lagres automatisk på leaderboard ved game over
+Browser-basert arkadespill med online leaderboard.
 
 ## Spill
 
-**Mål:** Unngå hindringene så lenge du kan. Jo lenger du overlever, jo høyere score.
+Unngå fallende hindringer og overlev så lenge som mulig. Poeng akkumuleres over tid; høyere nivå gir raskere hindringer og hyppigere spawns.
 
 ### Kontroller
 
 | Tast | Handling |
 |------|----------|
-| `←` `→` `↑` `↓` | Beveg spilleren |
-| `W` `A` `S` `D` | Alternativ bevegelse |
-| `Space` | Start / spill igjen (krever innlogging) |
+| Piltaster / WASD | Bevegelse |
+| Space | Start / restart |
 
-### Levels
+Innlogging kreves for å spille.
 
-Hvert **400 poeng** gir nytt level:
+### Nivåer
 
-| Level | Tema | Endring |
-|-------|------|---------|
-| 1 | By | Standard hastighet |
-| 2 | Skog | Raskere, grønn bakgrunn |
-| 3 | Lava | Enda raskere |
-| 4 | Rom | Stjerner i bakgrunnen |
-| 5 | Neon | Maks hastighet |
-| 6 | God Mode | Ultimate challenge |
+Nytt nivå hvert 400. poeng. 6 nivåer med økende hastighet og visuelt tema.
 
-### Power-ups (fallende stjerner)
+### Power-ups
 
-| Stjerne | Effekt | Varighet |
-|---------|--------|----------|
-| Blå | Skjold – blokkerer **ett** treff | Maks 3 sek |
-| Lilla | Mini – mindre hitbox | 5 sek |
-| Gull | God Mode – usårbar, knuser kuber | 4 sek |
+| Type | Effekt |
+|------|--------|
+| Skjold | Blokkerer ett treff |
+| Mini | Redusert hitbox |
+| God mode | Usårbar i begrenset periode |
 
-## Leaderboard
+Flere power-ups kan være aktive samtidig. Samme type forlenger varigheten.
 
-- Én **personlig rekord** per bruker (høyeste score telles)
-- Topp 20 vises i sidepanelet
-- Krever innlogging med e-post og passord
+### Score og leaderboard
+
+- Poeng øker kontinuerlig under spill.
+- Ved game over lagres score som personlig rekord (kun hvis ny score er høyere).
+- Leaderboard viser topp 20 spillere med navn, score og nivå.
+- Krever registrering med e-post og passord.
 
 ## Teknologi
 
+| Lag | Stack |
+|-----|-------|
+| Frontend | HTML, CSS, JavaScript (Canvas) |
+| Auth og database | Supabase (PostgreSQL, Auth, RLS) |
+| Hosting | GitHub Pages |
+
 ```
-.
-├── index.html
-├── css/game.css
-├── js/
-│   ├── config.js          ← Supabase URL + anon key
-│   ├── auth.js            ← Innlogging
-│   ├── leaderboard.js     ← Score + leaderboard
-│   └── game.js
-├── supabase/
-│   └── schema.sql         ← Database-oppsett
-└── SUPABASE-SETUP.md
+index.html
+css/game.css
+js/game.js, auth.js, leaderboard.js
+supabase/schema.sql
 ```
 
-- Frontend: ren HTML, CSS, JavaScript
-- Backend: [Supabase](https://supabase.com) (gratis, open source PostgreSQL)
-
-## Publisering (senere)
-
-1. Push til GitHub
-2. Aktiver **GitHub Pages** på `main`-branchen
-3. Oppdater Supabase **Site URL** til din live-adresse
-4. Hver `git push` oppdaterer spillet automatisk
-
-## Utvidelser (ideer)
-
-- [ ] Touch-styring for mobil
-- [ ] Lyd og musikk
-- [ ] Anti-juks validering (Edge Function)
-- [ ] Ukentlig turnering-modus
-
----
-
-Laget for vennekonkurranse. Lykke til!
+Lokal kjøring: `python -m http.server 3000` — se `SUPABASE-SETUP.md` for backend-oppsett.
