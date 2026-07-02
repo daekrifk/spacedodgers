@@ -612,7 +612,10 @@
                 const oy = o.y + o.h / 2;
 
                 if (hasGodMode()) {
+                    const bonus = getShieldBreakBonus();
+                    score += bonus;
                     triggerGodModeCrush(ox, oy, o.color);
+                    showFloatText('+' + bonus, '#fcd34d');
                     obstacles.splice(i, 1);
                 } else if (hasShield()) {
                     const bonus = getShieldBreakBonus();
