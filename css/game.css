@@ -994,6 +994,30 @@ kbd {
     align-items: center;
     justify-content: center;
     font-size: 0.85rem;
+    border: 1px solid var(--border);
+}
+
+.skin-chip-rainbow {
+    border: none;
+    background: conic-gradient(
+        #f43f5e, #fb923c, #fcd34d, #4ade80,
+        #22d3ee, #818cf8, #c084fc, #f43f5e
+    );
+    animation: skin-rainbow-spin 3s linear infinite;
+}
+
+@keyframes skin-rainbow-spin {
+    to { transform: rotate(360deg); }
+}
+
+.skin-chip-pulse {
+    border: none;
+    animation: skin-pulse-glow 1.4s ease-in-out infinite;
+}
+
+@keyframes skin-pulse-glow {
+    0%, 100% { box-shadow: 0 0 4px var(--pulse-glow); }
+    50% { box-shadow: 0 0 16px var(--pulse-glow); }
 }
 
 .skin-label {

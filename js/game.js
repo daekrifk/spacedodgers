@@ -876,10 +876,40 @@
             ctx.restore();
         }
 
+        const now = performance.now();
+        let skinBody = null;
+        let skinGlow = null;
+        let skinTrail = null;
+        let skinBlur = 16;
+        let skinFlatOutline = false;
+        if (skin) {
+            if (skin.effect === 'rainbow') {
+                const hue = (now * 0.06) % 360;
+                skinBody = `hsl(${hue}, 90%, 65%)`;
+                skinGlow = skinBody;
+                skinTrail = `hsl(${hue}, 90%, 75%)`;
+                skinBlur = 20;
+            } else if (skin.effect === 'pulse') {
+                skinBody = skin.body;
+                skinGlow = skin.glow;
+                skinTrail = skin.trail;
+                skinBlur = 14 + Math.sin(now * 0.006) * 10;
+            } else if (skin.tier === 'flat') {
+                skinBody = skin.body;
+                skinTrail = skin.body;
+                skinBlur = 0;
+                skinFlatOutline = true;
+            } else {
+                skinBody = skin.body;
+                skinGlow = skin.glow;
+                skinTrail = skin.trail;
+            }
+        }
+
         for (let i = player.trail.length - 1; i >= 0; i--) {
             const t = player.trail[i];
             const alpha = (1 - i / player.trail.length) * 0.35;
-            let trailColor = skin?.trail ?? theme.accent;
+            let trailColor = skinTrail ?? theme.accent;
             if (hasGodMode()) trailColor = '#fcd34d';
             else if (hasShield()) trailColor = '#38bdf8';
             else if (hasShrink()) trailColor = '#c084fc';
@@ -894,21 +924,24 @@
         ctx.save();
         ctx.translate(player.x, player.y);
 
-        let bodyColor = skin?.body ?? theme.accent;
-        let glowColor = skin?.glow ?? theme.accent;
-        let glowBlur = 16;
+        let bodyColor = skinBody ?? theme.accent;
+        let glowColor = skinGlow ?? bodyColor;
+        let glowBlur = skin ? skinBlur : 16;
         if (hasGodMode()) {
             bodyColor = '#fcd34d';
             glowColor = '#fcd34d';
             glowBlur = 24;
+            skinFlatOutline = false;
         } else if (hasShield()) {
             bodyColor = '#7dd3fc';
             glowColor = '#38bdf8';
             glowBlur = 18;
+            skinFlatOutline = false;
         } else if (hasShrink()) {
             bodyColor = '#c084fc';
             glowColor = '#a855f7';
             glowBlur = 14;
+            skinFlatOutline = false;
         }
 
         ctx.shadowColor = glowColor;
@@ -921,6 +954,13 @@
         ctx.lineTo(-player.size * 0.75, player.size * 0.6);
         ctx.closePath();
         ctx.fill();
+
+        if (skinFlatOutline) {
+            ctx.shadowBlur = 0;
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+            ctx.stroke();
+        }
 
         ctx.fillStyle = 'rgba(255,255,255,0.5)';
         ctx.beginPath();

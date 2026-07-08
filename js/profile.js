@@ -8,64 +8,70 @@
     const badgeGrid = document.getElementById('badge-grid');
     const skinGrid = document.getElementById('skin-grid');
 
-    // Standard-skinet er alltid ulåst og bruker level-temaets accent-farge (body/glow/trail = null).
-    const DEFAULT_SKIN = { id: 'default', name: 'Standard', body: null, glow: null, trail: null };
+    // Standard-skinet er alltid ulåst og bruker level-temaets accent-farge.
+    const DEFAULT_SKIN = { id: 'default', name: 'Standard', tier: 'default', body: null, glow: null, trail: null };
 
-    // Hvert skin låses opp av en badge. Kravene er bevisst grindy.
+    // Hvert skin låses opp av en badge. Belønningene trappes opp:
+    //   flat    -> gråtone, ingen glow (letteste badges)
+    //   glow    -> farge med glow + trail (middels)
+    //   pattern -> animert effekt (hardeste grind)
     const SKINS = [
+        // --- Flat gråtone, ingen glow (5 letteste) ---
         {
-            id: 'ember', name: 'Ember', badge: 'Rookie',
-            body: '#fb923c', glow: '#f97316', trail: '#fdba74',
+            id: 'white', name: 'Hvit', badge: 'Rookie', tier: 'flat',
+            body: '#f8fafc', glow: null, trail: null,
             req: { stat: 'bestLevel', value: 5 },
         },
         {
-            id: 'aqua', name: 'Aqua', badge: 'Highscore I',
-            body: '#38bdf8', glow: '#0ea5e9', trail: '#7dd3fc',
+            id: 'silver', name: 'Sølv', badge: 'Highscore I', tier: 'flat',
+            body: '#cbd5e1', glow: null, trail: null,
             req: { stat: 'personalBest', value: 2000 },
         },
         {
-            id: 'violet', name: 'Violet', badge: 'Highscore II',
-            body: '#c084fc', glow: '#a855f7', trail: '#d8b4fe',
+            id: 'gray', name: 'Grå', badge: 'Maraton', tier: 'flat',
+            body: '#94a3b8', glow: null, trail: null,
+            req: { stat: 'totalPlaySeconds', value: 3600 },
+        },
+        {
+            id: 'graphite', name: 'Grafitt', badge: 'Highscore II', tier: 'flat',
+            body: '#64748b', glow: null, trail: null,
             req: { stat: 'personalBest', value: 4000 },
         },
         {
-            id: 'gold', name: 'Gull', badge: 'Supernova',
+            id: 'onyx', name: 'Onyx', badge: 'Veteran', tier: 'flat',
+            body: '#334155', glow: null, trail: null,
+            req: { stat: 'gamesPlayed', value: 100 },
+        },
+        // --- Farge med glow + trail (middels) ---
+        {
+            id: 'gold', name: 'Gull', badge: 'Supernova', tier: 'glow',
             body: '#fcd34d', glow: '#f59e0b', trail: '#fde68a',
             req: { stat: 'bestLevel', value: 10 },
         },
         {
-            id: 'emerald', name: 'Smaragd', badge: 'Maraton',
-            body: '#34d399', glow: '#10b981', trail: '#6ee7b7',
-            req: { stat: 'totalPlaySeconds', value: 3600 },
-        },
-        {
-            id: 'crimson', name: 'Crimson', badge: 'Veteran',
-            body: '#f43f5e', glow: '#e11d48', trail: '#fb7185',
-            req: { stat: 'gamesPlayed', value: 100 },
-        },
-        {
-            id: 'plasma', name: 'Plasma', badge: 'Legende',
+            id: 'plasma', name: 'Plasma', badge: 'Legende', tier: 'glow',
             body: '#f472b6', glow: '#db2777', trail: '#f9a8d4',
             req: { stat: 'personalBest', value: 8000 },
         },
         {
-            id: 'chrome', name: 'Chrome', badge: 'Poengjeger',
-            body: '#e2e8f0', glow: '#94a3b8', trail: '#f1f5f9',
-            req: { stat: 'totalScore', value: 100000 },
-        },
-        {
-            id: 'frost', name: 'Frost', badge: 'Utholdenhet',
+            id: 'frost', name: 'Frost', badge: 'Utholdenhet', tier: 'glow',
             body: '#5eead4', glow: '#14b8a6', trail: '#99f6e4',
             req: { stat: 'totalPlaySeconds', value: 18000 },
         },
         {
-            id: 'void', name: 'Void', badge: 'Fanatiker',
+            id: 'violet', name: 'Violet', badge: 'Poengjeger', tier: 'glow',
+            body: '#c084fc', glow: '#a855f7', trail: '#d8b4fe',
+            req: { stat: 'totalScore', value: 100000 },
+        },
+        // --- Animert mønster (hardeste grind) ---
+        {
+            id: 'nova', name: 'Nova', badge: 'Fanatiker', tier: 'pattern', effect: 'pulse',
             body: '#818cf8', glow: '#4f46e5', trail: '#c7d2fe',
             req: { stat: 'gamesPlayed', value: 500 },
         },
         {
-            id: 'toxic', name: 'Toksisk', badge: 'Rikdom',
-            body: '#bef264', glow: '#84cc16', trail: '#d9f99d',
+            id: 'rainbow', name: 'Regnbue', badge: 'Rikdom', tier: 'pattern', effect: 'rainbow',
+            body: '#f472b6', glow: '#a855f7', trail: '#fca5a5',
             req: { stat: 'totalScore', value: 250000 },
         },
     ];
@@ -127,12 +133,18 @@
         return set;
     }
 
-    // Fargene game.js skal bruke for det utstyrte skinet, eller null for standard.
+    // Full skin-deskriptor game.js skal tegne, eller null for standard.
     function getEquippedSkinColors() {
         const skin = getSkinById(equippedSkinId);
         if (!skin || skin.id === 'default') return null;
         if (!unlockedIds.has(skin.id)) return null;
-        return { body: skin.body, glow: skin.glow, trail: skin.trail };
+        return {
+            tier: skin.tier,
+            effect: skin.effect ?? null,
+            body: skin.body,
+            glow: skin.glow,
+            trail: skin.trail,
+        };
     }
 
     function showToast(message) {
@@ -231,6 +243,14 @@
             chip.className = 'skin-chip';
             if (skin.id === 'default') {
                 chip.style.background = 'conic-gradient(#22d3ee, #a78bfa, #4ade80, #fcd34d, #22d3ee)';
+            } else if (skin.effect === 'rainbow') {
+                chip.classList.add('skin-chip-rainbow');
+            } else if (skin.effect === 'pulse') {
+                chip.classList.add('skin-chip-pulse');
+                chip.style.background = skin.body;
+                chip.style.setProperty('--pulse-glow', skin.glow);
+            } else if (skin.tier === 'flat') {
+                chip.style.background = skin.body;
             } else {
                 chip.style.background = skin.body;
                 chip.style.boxShadow = '0 0 10px ' + skin.glow;
