@@ -43,9 +43,34 @@
             body: '#f43f5e', glow: '#e11d48', trail: '#fb7185',
             req: { stat: 'gamesPlayed', value: 100 },
         },
+        {
+            id: 'plasma', name: 'Plasma', badge: 'Legende',
+            body: '#f472b6', glow: '#db2777', trail: '#f9a8d4',
+            req: { stat: 'personalBest', value: 8000 },
+        },
+        {
+            id: 'chrome', name: 'Chrome', badge: 'Poengjeger',
+            body: '#e2e8f0', glow: '#94a3b8', trail: '#f1f5f9',
+            req: { stat: 'totalScore', value: 100000 },
+        },
+        {
+            id: 'frost', name: 'Frost', badge: 'Utholdenhet',
+            body: '#5eead4', glow: '#14b8a6', trail: '#99f6e4',
+            req: { stat: 'totalPlaySeconds', value: 18000 },
+        },
+        {
+            id: 'void', name: 'Void', badge: 'Fanatiker',
+            body: '#818cf8', glow: '#4f46e5', trail: '#c7d2fe',
+            req: { stat: 'gamesPlayed', value: 500 },
+        },
+        {
+            id: 'toxic', name: 'Toksisk', badge: 'Rikdom',
+            body: '#bef264', glow: '#84cc16', trail: '#d9f99d',
+            req: { stat: 'totalScore', value: 250000 },
+        },
     ];
 
-    let stats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0 };
+    let stats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0, totalScore: 0 };
     let equippedSkinId = 'default';
     let unlockedIds = new Set();
     let baselineLoaded = false;
@@ -78,14 +103,18 @@
             return window.Stats?.formatPlayTime?.(value) ?? value + ' sek';
         }
         if (stat === 'bestLevel') return 'Level ' + value;
-        if (stat === 'personalBest') return value + ' poeng';
+        if (stat === 'personalBest') return value.toLocaleString('nb-NO') + ' poeng';
         if (stat === 'gamesPlayed') return value + ' runder';
+        if (stat === 'totalScore') return value.toLocaleString('nb-NO') + ' poeng totalt';
         return String(value);
     }
 
     function formatProgress(stat, value) {
         if (stat === 'totalPlaySeconds') {
             return window.Stats?.formatPlayTime?.(value) ?? value + ' sek';
+        }
+        if (stat === 'personalBest' || stat === 'totalScore') {
+            return value.toLocaleString('nb-NO');
         }
         return String(value);
     }
@@ -261,7 +290,7 @@
         const [statsResult, scoreResult, profileResult] = await Promise.all([
             client
                 .from('player_stats')
-                .select('best_level, total_play_seconds, games_played')
+                .select('best_level, total_play_seconds, games_played, total_score')
                 .eq('user_id', userId)
                 .maybeSingle(),
             client
@@ -287,6 +316,7 @@
             bestLevel: statsResult.data?.best_level ?? 1,
             totalPlaySeconds: statsResult.data?.total_play_seconds ?? 0,
             gamesPlayed: statsResult.data?.games_played ?? 0,
+            totalScore: statsResult.data?.total_score ?? 0,
         };
 
         equippedSkinId = profileResult.data?.equipped_skin || 'default';
@@ -314,7 +344,7 @@
     }
 
     function reset() {
-        stats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0 };
+        stats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0, totalScore: 0 };
         equippedSkinId = 'default';
         unlockedIds = new Set(['default']);
         baselineLoaded = false;
