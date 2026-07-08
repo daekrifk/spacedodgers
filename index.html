@@ -100,6 +100,7 @@
                 </div>
                 <div id="auth-logged-in" class="hidden">
                     <p class="auth-greeting">Hei, <strong id="auth-user-name">Spiller</strong>!</p>
+                    <button class="btn btn-secondary profile-open-btn" id="profile-btn" type="button">Min profil</button>
                     <div class="community-panel hidden" id="community-panel">
                         <p class="community-title">Aktivitet nå</p>
                         <div class="community-grid">
@@ -138,12 +139,31 @@
             </section>
         </aside>
     </div>
+    <div class="profile-overlay hidden" id="profile-overlay">
+        <div class="profile-modal">
+            <div class="profile-modal-header">
+                <h2 class="panel-title">Min profil</h2>
+                <button class="btn-icon" id="profile-close-btn" type="button" title="Lukk">✕</button>
+            </div>
+            <p class="profile-status" id="profile-status"></p>
+            <section class="profile-section">
+                <h3 class="profile-subtitle">Badges</h3>
+                <div class="badge-grid" id="badge-grid"></div>
+            </section>
+            <section class="profile-section">
+                <h3 class="profile-subtitle">Skip-farge</h3>
+                <p class="profile-hint">Lås opp badges for å få nye farger. Klikk for å ta i bruk.</p>
+                <div class="skin-grid" id="skin-grid"></div>
+            </section>
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script src="js/sanitize.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/leaderboard.js"></script>
     <script src="js/stats.js"></script>
+    <script src="js/profile.js"></script>
     <script src="js/community.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/game.js"></script>

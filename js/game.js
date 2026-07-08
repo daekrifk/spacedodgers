@@ -507,7 +507,7 @@
         player.size = getPlayerSize();
 
         const camping = isWallCamping();
-        const scoreRate = camping ? 0.12 : 0.45;
+        const scoreRate = 0.45;
         score += dt * scoreRate;
 
         if (camping) {
@@ -606,7 +606,7 @@
 
             if (o.y > canvas.height + 50) {
                 obstacles.splice(i, 1);
-                score += camping ? 0 : 1;
+                score += 1;
             } else if (circleRotatedRectOverlap(player.x, player.y, player.size * 0.85, o)) {
                 const ox = o.x + o.w / 2;
                 const oy = o.y + o.h / 2;
@@ -791,6 +791,7 @@
 
     function drawPlayer() {
         const theme = getTheme();
+        const skin = window.Profile?.getEquippedSkinColors?.();
 
         if (hasShield()) {
             const warn = isPowerupWarning('shield');
@@ -878,7 +879,7 @@
         for (let i = player.trail.length - 1; i >= 0; i--) {
             const t = player.trail[i];
             const alpha = (1 - i / player.trail.length) * 0.35;
-            let trailColor = theme.accent;
+            let trailColor = skin?.trail ?? theme.accent;
             if (hasGodMode()) trailColor = '#fcd34d';
             else if (hasShield()) trailColor = '#38bdf8';
             else if (hasShrink()) trailColor = '#c084fc';
@@ -893,8 +894,8 @@
         ctx.save();
         ctx.translate(player.x, player.y);
 
-        let bodyColor = theme.accent;
-        let glowColor = theme.accent;
+        let bodyColor = skin?.body ?? theme.accent;
+        let glowColor = skin?.glow ?? theme.accent;
         let glowBlur = 16;
         if (hasGodMode()) {
             bodyColor = '#fcd34d';

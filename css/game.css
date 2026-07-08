@@ -791,3 +791,243 @@ kbd {
         max-height: 360px;
     }
 }
+
+.profile-open-btn {
+    margin-bottom: 1rem;
+}
+
+.profile-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(10, 14, 23, 0.82);
+    backdrop-filter: blur(6px);
+    padding: 1.5rem;
+}
+
+.profile-overlay.hidden {
+    display: none !important;
+}
+
+.profile-modal {
+    width: 100%;
+    max-width: 460px;
+    max-height: 88vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+
+.profile-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.profile-modal-header .panel-title {
+    margin-bottom: 0;
+}
+
+.profile-status {
+    font-size: 0.72rem;
+    color: #f87171;
+    min-height: 0;
+    margin-bottom: 0.5rem;
+}
+
+.profile-status:empty {
+    display: none;
+}
+
+.profile-section {
+    margin-top: 1.25rem;
+}
+
+.profile-subtitle {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+}
+
+.profile-hint {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin: -0.35rem 0 0.75rem;
+    line-height: 1.5;
+}
+
+.badge-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.badge-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.badge-card.badge-locked {
+    opacity: 0.72;
+}
+
+.badge-dot {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    border-radius: 999px;
+    border: 2px solid var(--border);
+    color: #0a0e17;
+    font-weight: 700;
+}
+
+.badge-locked .badge-dot {
+    color: var(--muted);
+    background: transparent !important;
+}
+
+.badge-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.badge-name {
+    font-family: var(--font-display);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.badge-req {
+    font-size: 0.68rem;
+    color: var(--muted);
+}
+
+.badge-unlocked .badge-req {
+    color: #4ade80;
+}
+
+.badge-bar {
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    margin-top: 0.15rem;
+}
+
+.badge-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.badge-progress {
+    font-size: 0.64rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.skin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 0.6rem;
+}
+
+.skin-swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 0.4rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--text);
+    transition: border-color 0.15s, transform 0.15s;
+}
+
+.skin-swatch:not(:disabled):hover {
+    transform: translateY(-2px);
+    border-color: rgba(34, 211, 238, 0.4);
+}
+
+.skin-swatch.skin-selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.skin-swatch.skin-locked {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.skin-chip {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+
+.skin-label {
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-align: center;
+}
+
+.skin-selected .skin-label {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.badge-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 2rem;
+    transform: translateX(-50%) translateY(1.5rem);
+    z-index: 200;
+    max-width: 90vw;
+    padding: 0.75rem 1.1rem;
+    background: var(--surface);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 0.8rem;
+    font-weight: 600;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    pointer-events: none;
+}
+
+.badge-toast-show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
