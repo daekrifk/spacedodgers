@@ -483,6 +483,69 @@ body {
     transition: background 0.4s, color 0.4s, border-color 0.4s;
 }
 
+.combo-meter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 3.4rem;
+    --combo-glow: #22d3ee;
+}
+
+.combo-meter.combo-bump {
+    animation: combo-pop 0.18s ease-out;
+}
+
+.combo-mult {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--combo-glow);
+    text-shadow: 0 0 10px var(--combo-glow);
+    font-variant-numeric: tabular-nums;
+}
+
+.combo-bar {
+    height: 4px;
+    width: 100%;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.combo-bar-fill {
+    height: 100%;
+    width: 100%;
+    border-radius: 999px;
+    background: var(--combo-glow);
+    transition: width 0.1s linear;
+}
+
+.combo-meter.combo-hot {
+    animation: combo-hot-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes combo-pop {
+    0% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
+@keyframes combo-hot-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+.sound-toggle {
+    margin-top: 0.35rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    font-size: 0.85rem;
+}
+
+.sound-toggle.sound-off {
+    opacity: 0.5;
+}
+
 .powerup-badge.powerup-warning {
     animation: powerup-pulse 0.8s ease-in-out infinite;
 }
@@ -609,6 +672,29 @@ body {
 .screenshot-hint {
     font-size: 0.75rem !important;
     margin-bottom: 1.5rem !important;
+}
+
+.unlock-banner {
+    font-size: 0.82rem !important;
+    font-weight: 700;
+    color: #fcd34d !important;
+    background: rgba(252, 211, 77, 0.12);
+    border: 1px solid rgba(252, 211, 77, 0.4);
+    border-radius: 10px;
+    padding: 0.65rem 0.85rem !important;
+    margin-bottom: 1.25rem !important;
+    line-height: 1.45 !important;
+    animation: unlock-pop 0.45s ease-out, unlock-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes unlock-pop {
+    0% { opacity: 0; transform: scale(0.85); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes unlock-glow {
+    0%, 100% { box-shadow: 0 0 6px rgba(252, 211, 77, 0.25); }
+    50% { box-shadow: 0 0 20px rgba(252, 211, 77, 0.5); }
 }
 
 .controls-hint {

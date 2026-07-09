@@ -34,11 +34,16 @@
                     <div class="hud-left">
                         <h1 class="game-title">Dodge Run</h1>
                         <span class="level-badge" id="level-badge">Level 1</span>
+                        <div class="combo-meter hidden" id="combo-meter">
+                            <span class="combo-mult" id="combo-mult">x1.0</span>
+                            <div class="combo-bar"><div class="combo-bar-fill" id="combo-bar-fill"></div></div>
+                        </div>
                         <div class="powerup-badges" id="powerup-badges"></div>
                     </div>
                     <div class="score-block">
                         <span class="score-label">Score</span>
                         <span class="score-value" id="score">0</span>
+                        <button class="btn-icon sound-toggle" id="sound-toggle-btn" type="button" title="Lyd på/av" aria-label="Lyd på/av">🔊</button>
                     </div>
                 </header>
                 <main class="game-area">
@@ -62,6 +67,7 @@
                             <p class="final-score-big"><span id="final-score">0</span></p>
                             <p class="final-level">Level <span id="final-level">1</span></p>
                             <p class="screenshot-hint" id="score-submit-hint">Score lagres på leaderboard når du er innlogget.</p>
+                            <p class="unlock-banner hidden" id="unlock-banner"></p>
                             <button class="btn btn-primary" id="restart-btn">Spill igjen</button>
                         </div>
                     </div>
@@ -166,6 +172,7 @@
     <script src="js/profile.js"></script>
     <script src="js/community.js"></script>
     <script src="js/chat.js"></script>
+    <script src="js/sfx.js"></script>
     <script src="js/game.js"></script>
 </body>
 </html>

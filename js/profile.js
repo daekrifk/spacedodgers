@@ -63,6 +63,11 @@
             body: '#c084fc', glow: '#a855f7', trail: '#d8b4fe',
             req: { stat: 'totalScore', value: 100000 },
         },
+        {
+            id: 'inferno', name: 'Inferno', badge: 'Kombomester', tier: 'glow',
+            body: '#fb7185', glow: '#e11d48', trail: '#fda4af',
+            req: { stat: 'bestCombo', value: 30 },
+        },
         // --- Animert mønster (hardeste grind) ---
         {
             id: 'nova', name: 'Nova', badge: 'Fanatiker', tier: 'pattern', effect: 'pulse',
@@ -76,7 +81,7 @@
         },
     ];
 
-    let stats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0, totalScore: 0 };
+    let stats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0, totalScore: 0, bestCombo: 0 };
     let equippedSkinId = 'default';
     let unlockedIds = new Set();
     let baselineLoaded = false;
@@ -112,6 +117,7 @@
         if (stat === 'personalBest') return value.toLocaleString('nb-NO') + ' poeng';
         if (stat === 'gamesPlayed') return value + ' runder';
         if (stat === 'totalScore') return value.toLocaleString('nb-NO') + ' poeng totalt';
+        if (stat === 'bestCombo') return value + ' combo';
         return String(value);
     }
 
@@ -160,11 +166,24 @@
     }
 
     function announceNewUnlocks(previous, current) {
-        for (const skin of SKINS) {
-            if (current.has(skin.id) && !previous.has(skin.id)) {
-                showToast('Badge låst opp: ' + skin.badge + ' – ny farge «' + skin.name + '»!');
-            }
+        const newly = SKINS.filter((skin) => current.has(skin.id) && !previous.has(skin.id));
+        if (!newly.length) return;
+
+        for (const skin of newly) {
+            showToast('Badge låst opp: ' + skin.badge + ' – ny farge «' + skin.name + '»!');
         }
+
+        document.dispatchEvent(new CustomEvent('badge:unlocked', {
+            detail: {
+                skins: newly.map((skin) => ({
+                    badge: skin.badge,
+                    name: skin.name,
+                    tier: skin.tier,
+                    effect: skin.effect ?? null,
+                    body: skin.body,
+                })),
+            },
+        }));
     }
 
     function renderBadges() {
@@ -310,7 +329,7 @@
         const [statsResult, scoreResult, profileResult] = await Promise.all([
             client
                 .from('player_stats')
-                .select('best_level, total_play_seconds, games_played, total_score')
+                .select('best_level, total_play_seconds, games_played, total_score, best_combo')
                 .eq('user_id', userId)
                 .maybeSingle(),
             client
@@ -337,6 +356,7 @@
             totalPlaySeconds: statsResult.data?.total_play_seconds ?? 0,
             gamesPlayed: statsResult.data?.games_played ?? 0,
             totalScore: statsResult.data?.total_score ?? 0,
+            bestCombo: statsResult.data?.best_combo ?? 0,
         };
 
         equippedSkinId = profileResult.data?.equipped_skin || 'default';
@@ -364,7 +384,7 @@
     }
 
     function reset() {
-        stats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0, totalScore: 0 };
+        stats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0, totalScore: 0, bestCombo: 0 };
         equippedSkinId = 'default';
         unlockedIds = new Set(['default']);
         baselineLoaded = false;

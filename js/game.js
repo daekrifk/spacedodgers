@@ -15,6 +15,10 @@
     const finalLevelEl = document.getElementById('final-level');
     const scoreSubmitHint = document.getElementById('score-submit-hint');
     const loginRequiredHint = document.getElementById('login-required-hint');
+    const unlockBanner = document.getElementById('unlock-banner');
+    const comboMeterEl = document.getElementById('combo-meter');
+    const comboMultEl = document.getElementById('combo-mult');
+    const comboBarFillEl = document.getElementById('combo-bar-fill');
 
     const POINTS_PER_LEVEL = 400;
     const WARMUP_FRAMES = 30;
@@ -25,6 +29,11 @@
     const WALL_CAMP_THRESHOLD = 75;
     const POWERUP_WARN_START = 90;
     const POWERUP_WARN_CRITICAL = 45;
+    const GRAZE_MARGIN = 18;
+    const COMBO_DURATION = 180;
+    const COMBO_MULT_STEP = 0.1;
+    const COMBO_MULT_CAP = 5;
+    const SLOWMO_SCALE = 0.45;
 
     const LEVEL_THEMES = [
         { name: 'Level 1 – By', bg: ['#0f172a', '#1e293b'], grid: '#334155', accent: '#22d3ee', obstacle: '#f43f5e' },
@@ -66,6 +75,10 @@
     let screenFlashColor = '#fcd34d';
     let crushRings = [];
     let floatTexts = [];
+    let combo = 0;
+    let comboTimer = 0;
+    let bestComboThisRun = 0;
+    let timeScale = 1;
 
     function getTheme() {
         return LEVEL_THEMES[Math.min(level - 1, LEVEL_THEMES.length - 1)];
@@ -193,8 +206,17 @@
         screenFlash = 0;
         crushRings = [];
         floatTexts = [];
+        combo = 0;
+        comboTimer = 0;
+        bestComboThisRun = 0;
+        timeScale = 1;
         resetPlayer();
         updateHud();
+        updateComboHud();
+    }
+
+    function getComboMultiplier() {
+        return Math.min(COMBO_MULT_CAP, 1 + combo * COMBO_MULT_STEP);
     }
 
     function updatePowerupHud() {
@@ -242,6 +264,76 @@
     function flashScreen(color, intensity) {
         screenFlashColor = color;
         screenFlash = Math.min(0.4, Math.max(screenFlash, intensity));
+    }
+
+    function comboColor() {
+        if (combo >= 30) return '#f43f5e';
+        if (combo >= 20) return '#fb923c';
+        if (combo >= 10) return '#fcd34d';
+        return '#22d3ee';
+    }
+
+    function updateComboHud() {
+        if (!comboMeterEl) return;
+        if (combo <= 0) {
+            comboMeterEl.classList.add('hidden');
+            return;
+        }
+        const mult = getComboMultiplier();
+        const color = comboColor();
+        comboMeterEl.classList.remove('hidden');
+        if (comboMultEl) {
+            comboMultEl.textContent = 'x' + mult.toFixed(1);
+            comboMultEl.style.color = color;
+        }
+        if (comboBarFillEl) {
+            comboBarFillEl.style.width = Math.max(0, Math.min(1, comboTimer / COMBO_DURATION)) * 100 + '%';
+            comboBarFillEl.style.background = color;
+        }
+        comboMeterEl.style.setProperty('--combo-glow', color);
+        comboMeterEl.classList.toggle('combo-hot', combo >= 20);
+    }
+
+    function registerNearMiss(o) {
+        const prevMult = getComboMultiplier();
+        combo++;
+        comboTimer = COMBO_DURATION;
+        bestComboThisRun = Math.max(bestComboThisRun, combo);
+
+        const mult = getComboMultiplier();
+        const color = comboColor();
+        const mx = (player.x + o.x + o.w / 2) / 2;
+        const my = (player.y + o.y + o.h / 2) / 2;
+
+        timeScale = SLOWMO_SCALE;
+        spawnParticles(mx, my, color, 8);
+        showFloatText('NÆR! x' + mult.toFixed(1), color);
+
+        if (comboMeterEl) {
+            comboMeterEl.classList.remove('combo-bump');
+            void comboMeterEl.offsetWidth;
+            comboMeterEl.classList.add('combo-bump');
+        }
+
+        const milestone = Math.floor(mult) > Math.floor(prevMult) && mult > 1;
+        if (milestone) {
+            flashScreen(color, 0.18);
+            shake = Math.min(8, shake + 3);
+            window.Sfx?.comboMilestone?.(Math.floor(mult));
+        } else {
+            flashScreen(color, 0.08);
+            window.Sfx?.nearMiss?.(combo);
+        }
+
+        updateComboHud();
+    }
+
+    function breakCombo() {
+        if (combo <= 0) return;
+        combo = 0;
+        comboTimer = 0;
+        window.Sfx?.comboLost?.();
+        updateComboHud();
     }
 
     function breakShield(x, y) {
@@ -307,18 +399,29 @@
         state = 'playing';
         roundStartedAt = Date.now();
         window.Community?.setPlaying(true);
+        hideUnlockBanner();
         startScreen.classList.add('hidden');
         gameoverScreen.classList.add('hidden');
         lastTime = 0;
         requestAnimationFrame(gameLoop);
     }
 
+    function hideUnlockBanner() {
+        if (!unlockBanner) return;
+        unlockBanner.classList.add('hidden');
+        unlockBanner.textContent = '';
+    }
+
     async function endGame() {
         state = 'gameover';
         window.Community?.setPlaying(false);
+        combo = 0;
+        comboTimer = 0;
+        updateComboHud();
         const finalScore = Math.floor(score);
         finalScoreEl.textContent = finalScore;
         finalLevelEl.textContent = level;
+        hideUnlockBanner();
         gameoverScreen.classList.remove('hidden');
         shake = 12;
 
@@ -326,7 +429,7 @@
             if (window.Stats?.recordGameRun && window.Auth?.isLoggedIn()) {
                 scoreSubmitHint.textContent = 'Lagrer score og statistikk...';
                 const durationSec = Math.max(1, Math.round((Date.now() - roundStartedAt) / 1000));
-                const result = await window.Stats.recordGameRun(finalScore, level, durationSec);
+                const result = await window.Stats.recordGameRun(finalScore, level, durationSec, bestComboThisRun);
                 if (result.ok && result.warning) {
                     scoreSubmitHint.textContent = result.warning;
                 } else {
@@ -508,7 +611,13 @@
 
         const camping = isWallCamping();
         const scoreRate = 0.45;
-        score += dt * scoreRate;
+        score += dt * scoreRate * getComboMultiplier();
+
+        if (comboTimer > 0) {
+            comboTimer -= dt;
+            if (comboTimer <= 0) breakCombo();
+            else updateComboHud();
+        }
 
         if (camping) {
             wallCampFrames += dt;
@@ -606,7 +715,7 @@
 
             if (o.y > canvas.height + 50) {
                 obstacles.splice(i, 1);
-                score += 1;
+                score += getComboMultiplier();
             } else if (circleRotatedRectOverlap(player.x, player.y, player.size * 0.85, o)) {
                 const ox = o.x + o.w / 2;
                 const oy = o.y + o.h / 2;
@@ -628,6 +737,13 @@
                     endGame();
                     return;
                 }
+            } else if (
+                !o.grazed
+                && !isInvincible()
+                && circleRotatedRectOverlap(player.x, player.y, player.size * 0.85 + GRAZE_MARGIN, o)
+            ) {
+                o.grazed = true;
+                registerNearMiss(o);
             }
         }
 
@@ -1153,10 +1269,13 @@
         }
 
         const rawDt = (timestamp - lastTime) / 16.67;
-        const dt = Math.min(Math.max(rawDt, 0), 2);
+        const clampedDt = Math.min(Math.max(rawDt, 0), 2);
         lastTime = timestamp;
 
-        update(dt);
+        timeScale += (1 - timeScale) * 0.08;
+        if (timeScale > 0.995) timeScale = 1;
+
+        update(clampedDt * timeScale);
         draw();
 
         requestAnimationFrame(gameLoop);
@@ -1198,6 +1317,16 @@
     restartBtn.addEventListener('click', startGame);
 
     document.addEventListener('auth:changed', updateLoginHint);
+
+    document.addEventListener('badge:unlocked', (e) => {
+        const skins = e.detail?.skins;
+        if (!unlockBanner || !skins?.length || state !== 'gameover') return;
+
+        const parts = skins.map((s) => s.badge + ' – «' + s.name + '»');
+        const prefix = skins.length > 1 ? 'Nye badges låst opp: ' : 'Ny badge låst opp: ';
+        unlockBanner.textContent = prefix + parts.join(', ') + '!';
+        unlockBanner.classList.remove('hidden');
+    });
 
     resetPlayer();
     drawBackground();

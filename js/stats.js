@@ -10,6 +10,7 @@
         { key: 'personal_best', label: 'Personlig rekord' },
         { key: 'average_score', label: 'Snitt-score' },
         { key: 'best_level', label: 'Høyeste level' },
+        { key: 'best_combo', label: 'Beste combo' },
         { key: 'total_play_time', label: 'Total tid' },
         { key: 'last_played', label: 'Sist spilt' },
     ];
@@ -59,6 +60,7 @@
             personal_best: String(personalBest ?? 0),
             average_score: String(averageScore),
             best_level: String(statsRow?.best_level ?? 1),
+            best_combo: String(statsRow?.best_combo ?? 0),
             total_play_time: formatPlayTime(statsRow?.total_play_seconds ?? 0),
             last_played: formatLastPlayed(statsRow?.last_played_at),
         };
@@ -131,7 +133,7 @@
         const [statsResult, scoreResult] = await Promise.all([
             client
                 .from('player_stats')
-                .select('games_played, total_score, best_level, total_play_seconds, last_played_at')
+                .select('games_played, total_score, best_level, total_play_seconds, best_combo, last_played_at')
                 .eq('user_id', userId)
                 .maybeSingle(),
             client
@@ -158,7 +160,7 @@
         return displayData;
     }
 
-    async function recordGameRun(score, level, durationSec) {
+    async function recordGameRun(score, level, durationSec, bestCombo) {
         const client = getClient();
         if (!client || !window.Auth?.isLoggedIn()) {
             return { ok: false, reason: 'not_logged_in' };
@@ -167,11 +169,13 @@
         await ensurePlayerStatsRow();
 
         const safeDuration = Math.max(1, Math.min(86400, Math.round(durationSec)));
+        const safeCombo = Math.max(0, Math.round(bestCombo || 0));
 
         const { error } = await client.rpc('finish_game_run', {
             p_score: score,
             p_level: level,
             p_duration_sec: safeDuration,
+            p_best_combo: safeCombo,
         });
 
         if (error) {
