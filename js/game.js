@@ -349,7 +349,7 @@
         const mx = (player.x + o.x + o.w / 2) / 2;
         const my = (player.y + o.y + o.h / 2) / 2;
 
-        timeScale = SLOWMO_SCALE;
+        if (jokerTimers.slowMo <= 0) timeScale = SLOWMO_SCALE;
         spawnParticles(mx, my, color, 8);
         showFloatText('NÆR! x' + mult.toFixed(1), color);
 
@@ -693,6 +693,10 @@
         return dx * dx + dy * dy <= reach * reach;
     }
 
+    function getObstacleTimeScale() {
+        return jokerTimers.slowMo > 0 ? JOKER_SLOWMO_SCALE : 1;
+    }
+
     function isWallCamping() {
         const edge = 55;
         return player.x < edge || player.x > canvas.width - edge;
@@ -824,8 +828,9 @@
         for (let i = obstacles.length - 1; i >= 0; i--) {
             const o = obstacles[i];
             const dir = o.direction ?? 1;
-            o.y += dir * o.speed * dt;
-            o.rot += o.rotSpeed * dt;
+            const obstacleDt = dt * getObstacleTimeScale();
+            o.y += dir * o.speed * obstacleDt;
+            o.rot += o.rotSpeed * obstacleDt;
 
             const passedTop = dir === 1 && o.y > canvas.height + 50;
             const passedBottom = dir === -1 && o.y + o.h < -50;
@@ -875,7 +880,7 @@
             } else if (circleCircleOverlap(
                 player.x, player.y, player.size * 1.1,
                 s.x, s.y, s.size * 1.3
-            )            ) {
+            ) {
                 if (s.type === 'joker') {
                     activateJoker();
                 } else {
@@ -1422,12 +1427,8 @@
         const clampedDt = Math.min(Math.max(rawDt, 0), 2);
         lastTime = timestamp;
 
-        if (jokerTimers.slowMo > 0) {
-            timeScale = JOKER_SLOWMO_SCALE;
-        } else {
-            timeScale += (1 - timeScale) * 0.08;
-            if (timeScale > 0.995) timeScale = 1;
-        }
+        timeScale += (1 - timeScale) * 0.08;
+        if (timeScale > 0.995) timeScale = 1;
 
         update(clampedDt * timeScale);
         draw();
