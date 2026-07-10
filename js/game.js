@@ -887,7 +887,7 @@
             } else if (circleCircleOverlap(
                 player.x, player.y, player.size * 1.1,
                 s.x, s.y, s.size * 1.3
-            ) {
+            )) {
                 if (s.type === 'joker') {
                     activateJoker();
                 } else {
