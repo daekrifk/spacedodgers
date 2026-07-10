@@ -868,7 +868,7 @@
             const s = powerups[i];
             s.y += s.speed * dt;
             s.rot += 0.04 * dt;
-            s.pulse += 0.08 * dt;
+            s.pulse += (s.type === 'joker' ? 0.14 : 0.08) * dt;
 
             if (s.y > canvas.height + 40) {
                 powerups.splice(i, 1);
@@ -991,20 +991,31 @@
 
     function drawPowerups() {
         for (const s of powerups) {
-            const pulse = 1 + Math.sin(s.pulse) * 0.15;
+            const isJoker = s.type === 'joker';
+            const pulse = 1 + Math.sin(s.pulse) * (isJoker ? 0.22 : 0.15);
             const r = s.size * pulse;
 
             ctx.save();
             ctx.translate(s.x, s.y);
             ctx.rotate(s.rot);
 
-            if (s.type === 'joker') {
+            if (isJoker) {
+                const blink = 0.55 + Math.abs(Math.sin(s.pulse * 1.4)) * 0.45;
+                ctx.globalAlpha = blink;
+
                 const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
                 grad.addColorStop(0, '#fde047');
                 grad.addColorStop(0.55, '#c084fc');
                 grad.addColorStop(1, '#7c3aed');
-                ctx.shadowColor = '#c084fc';
-                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#fde047';
+                ctx.shadowBlur = 14 + Math.abs(Math.sin(s.pulse * 1.4)) * 18;
+                ctx.fillStyle = grad;
+
+                ctx.beginPath();
+                ctx.arc(0, 0, r * 1.35, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(192, 132, 252, ${0.12 + blink * 0.18})`;
+                ctx.fill();
+
                 ctx.fillStyle = grad;
             } else {
                 const info = POWERUP_INFO[s.type];
@@ -1026,11 +1037,12 @@
             ctx.closePath();
             ctx.fill();
 
-            ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = 'bold 10px sans-serif';
+            ctx.globalAlpha = isJoker ? 0.7 + Math.abs(Math.sin(s.pulse * 1.4)) * 0.3 : 1;
+            ctx.fillStyle = isJoker ? '#fff' : 'rgba(255,255,255,0.85)';
+            ctx.font = isJoker ? 'bold 11px sans-serif' : 'bold 10px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            const icon = s.type === 'joker'
+            const icon = isJoker
                 ? '?'
                 : s.type === 'shield'
                     ? '🛡'
