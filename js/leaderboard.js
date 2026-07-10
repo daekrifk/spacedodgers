@@ -31,9 +31,15 @@
         rows.forEach((row, index) => {
             const rank = index + 1;
             const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
+            const ownId = window.Auth?.getUser()?.id;
+            const isOwn = ownId && row.user_id === ownId;
 
             const li = document.createElement('li');
-            li.className = 'leaderboard-row';
+            li.className = 'leaderboard-row leaderboard-row-clickable'
+                + (isOwn ? ' leaderboard-row-own' : '');
+            li.setAttribute('role', 'button');
+            li.setAttribute('tabindex', '0');
+            li.title = 'Vis profil';
 
             const rankEl = document.createElement('span');
             rankEl.className = 'leaderboard-rank';
@@ -52,6 +58,20 @@
             levelEl.textContent = 'Lv ' + row.level;
 
             li.append(rankEl, nameEl, scoreEl, levelEl);
+
+            const openProfile = () => {
+                if (row.user_id) {
+                    window.Profile?.openUser?.(row.user_id, row.display_name);
+                }
+            };
+            li.addEventListener('click', openProfile);
+            li.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openProfile();
+                }
+            });
+
             leaderboardList.appendChild(li);
         });
     }
@@ -75,7 +95,7 @@
 
         const { data, error } = await client
             .from('scores')
-            .select('score, level, updated_at, profiles(display_name)')
+            .select('user_id, score, level, updated_at, profiles(display_name)')
             .order('score', { ascending: false })
             .limit(20);
 
@@ -85,6 +105,7 @@
         }
 
         const rows = (data || []).map((entry) => ({
+            user_id: entry.user_id,
             display_name: entry.profiles?.display_name || 'Ukjent',
             score: entry.score,
             level: entry.level

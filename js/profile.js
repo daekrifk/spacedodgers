@@ -4,9 +4,15 @@
     const profileBtn = document.getElementById('profile-btn');
     const overlay = document.getElementById('profile-overlay');
     const closeBtn = document.getElementById('profile-close-btn');
+    const profileTitleEl = document.getElementById('profile-title');
     const statusEl = document.getElementById('profile-status');
+    const profileStatsGrid = document.getElementById('profile-stats-grid');
     const badgeGrid = document.getElementById('badge-grid');
+    const skinsSection = document.getElementById('profile-skins-section');
+    const skinsHint = document.getElementById('profile-skins-hint');
     const skinGrid = document.getElementById('skin-grid');
+    const equippedSection = document.getElementById('profile-equipped-section');
+    const equippedChipEl = document.getElementById('profile-equipped-chip');
 
     // Standard-skinet er alltid ulåst og bruker level-temaets accent-farge.
     const DEFAULT_SKIN = { id: 'default', name: 'Standard', tier: 'default', body: null, glow: null, trail: null };
@@ -84,8 +90,13 @@
     let stats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0, totalScore: 0, bestCombo: 0 };
     let equippedSkinId = 'default';
     let unlockedIds = new Set();
+    let ownStats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0, totalScore: 0, bestCombo: 0 };
+    let ownEquippedSkinId = 'default';
+    let ownUnlockedIds = new Set(['default']);
     let baselineLoaded = false;
     let saving = false;
+    let viewingUserId = null;
+    let viewingDisplayName = '';
 
     function getClient() {
         return window.Auth?.getClient() ?? null;
@@ -93,6 +104,50 @@
 
     function getUserId() {
         return window.Auth?.getUser()?.id ?? null;
+    }
+
+    function isViewingOther() {
+        const ownId = getUserId();
+        return Boolean(viewingUserId && ownId && viewingUserId !== ownId);
+    }
+
+    function isViewingSelf() {
+        if (!viewingUserId) return true;
+        return viewingUserId === getUserId();
+    }
+
+    function updateViewMode() {
+        const other = isViewingOther();
+        if (profileTitleEl) {
+            if (other && viewingDisplayName) {
+                profileTitleEl.textContent = viewingDisplayName + 's profil';
+            } else {
+                profileTitleEl.textContent = 'Min profil';
+            }
+        }
+        if (skinsSection) skinsSection.classList.toggle('hidden', other);
+        if (equippedSection) equippedSection.classList.toggle('hidden', !other);
+    }
+
+    function buildSkinChipElement(skin, unlocked) {
+        const chip = document.createElement('span');
+        chip.className = 'skin-chip';
+        if (skin.id === 'default') {
+            chip.style.background = 'conic-gradient(#22d3ee, #a78bfa, #4ade80, #fcd34d, #22d3ee)';
+        } else if (skin.effect === 'rainbow') {
+            chip.classList.add('skin-chip-rainbow');
+        } else if (skin.effect === 'pulse') {
+            chip.classList.add('skin-chip-pulse');
+            chip.style.background = skin.body;
+            chip.style.setProperty('--pulse-glow', skin.glow);
+        } else if (skin.tier === 'flat') {
+            chip.style.background = skin.body;
+        } else {
+            chip.style.background = skin.body;
+            if (skin.glow) chip.style.boxShadow = '0 0 10px ' + skin.glow;
+        }
+        if (!unlocked && skin.id !== 'default') chip.textContent = '🔒';
+        return chip;
     }
 
     function getSkinById(id) {
@@ -131,19 +186,24 @@
         return String(value);
     }
 
-    function computeUnlocked() {
+    function computeUnlockedFromStats(data) {
         const set = new Set(['default']);
         for (const skin of SKINS) {
-            if (isUnlocked(skin)) set.add(skin.id);
+            const val = data[skin.req.stat] ?? 0;
+            if (skin.id !== 'default' && val >= skin.req.value) set.add(skin.id);
         }
         return set;
     }
 
+    function computeUnlocked() {
+        return computeUnlockedFromStats(stats);
+    }
+
     // Full skin-deskriptor game.js skal tegne, eller null for standard.
     function getEquippedSkinColors() {
-        const skin = getSkinById(equippedSkinId);
+        const skin = getSkinById(ownEquippedSkinId);
         if (!skin || skin.id === 'default') return null;
-        if (!unlockedIds.has(skin.id)) return null;
+        if (!ownUnlockedIds.has(skin.id)) return null;
         return {
             tier: skin.tier,
             effect: skin.effect ?? null,
@@ -184,6 +244,50 @@
                 })),
             },
         }));
+    }
+
+    function renderStatsSummary() {
+        if (!profileStatsGrid) return;
+        profileStatsGrid.replaceChildren();
+
+        const fields = [
+            { label: 'Personlig rekord', value: stats.personalBest.toLocaleString('nb-NO') },
+            { label: 'Høyeste level', value: String(stats.bestLevel) },
+            { label: 'Beste combo', value: String(stats.bestCombo) },
+            { label: 'Runder spilt', value: String(stats.gamesPlayed) },
+            { label: 'Total tid', value: window.Stats?.formatPlayTime?.(stats.totalPlaySeconds) ?? stats.totalPlaySeconds + ' sek' },
+        ];
+
+        for (const field of fields) {
+            const row = document.createElement('div');
+            row.className = 'profile-stats-row';
+
+            const label = document.createElement('span');
+            label.className = 'profile-stats-label';
+            label.textContent = field.label;
+
+            const value = document.createElement('span');
+            value.className = 'profile-stats-value';
+            value.textContent = field.value;
+
+            row.append(label, value);
+            profileStatsGrid.appendChild(row);
+        }
+    }
+
+    function renderEquippedChip() {
+        if (!equippedChipEl) return;
+        equippedChipEl.replaceChildren();
+
+        const skin = getSkinById(equippedSkinId) ?? DEFAULT_SKIN;
+        const unlocked = unlockedIds.has(skin.id);
+
+        const chip = buildSkinChipElement(skin, unlocked);
+        const label = document.createElement('span');
+        label.className = 'profile-equipped-name';
+        label.textContent = skin.name;
+
+        equippedChipEl.append(chip, label);
     }
 
     function renderBadges() {
@@ -258,23 +362,7 @@
                 ? skin.name
                 : skin.name + ' – ' + formatReqValue(skin.req.stat, skin.req.value);
 
-            const chip = document.createElement('span');
-            chip.className = 'skin-chip';
-            if (skin.id === 'default') {
-                chip.style.background = 'conic-gradient(#22d3ee, #a78bfa, #4ade80, #fcd34d, #22d3ee)';
-            } else if (skin.effect === 'rainbow') {
-                chip.classList.add('skin-chip-rainbow');
-            } else if (skin.effect === 'pulse') {
-                chip.classList.add('skin-chip-pulse');
-                chip.style.background = skin.body;
-                chip.style.setProperty('--pulse-glow', skin.glow);
-            } else if (skin.tier === 'flat') {
-                chip.style.background = skin.body;
-            } else {
-                chip.style.background = skin.body;
-                chip.style.boxShadow = '0 0 10px ' + skin.glow;
-            }
-            if (!unlocked) chip.textContent = '🔒';
+            const chip = buildSkinChipElement(skin, unlocked);
 
             const label = document.createElement('span');
             label.className = 'skin-label';
@@ -287,17 +375,24 @@
     }
 
     function render() {
+        updateViewMode();
+        renderStatsSummary();
         renderBadges();
-        renderSkins();
+        if (isViewingOther()) {
+            renderEquippedChip();
+        } else {
+            renderSkins();
+        }
     }
 
     async function equipSkin(id) {
-        if (saving) return;
+        if (saving || isViewingOther()) return;
         if (!unlockedIds.has(id)) return;
         if (id === equippedSkinId) return;
 
         const previous = equippedSkinId;
         equippedSkinId = id;
+        ownEquippedSkinId = id;
         renderSkins();
 
         const client = getClient();
@@ -314,6 +409,7 @@
         if (error) {
             console.error('equipSkin failed:', error);
             equippedSkinId = previous;
+            ownEquippedSkinId = previous;
             renderSkins();
             if (statusEl) statusEl.textContent = 'Kunne ikke lagre farge: ' + error.message;
         } else if (statusEl) {
@@ -321,10 +417,9 @@
         }
     }
 
-    async function refresh() {
+    async function fetchUserData(userId) {
         const client = getClient();
-        const userId = getUserId();
-        if (!client || !userId) return;
+        if (!client || !userId) return { ok: false, reason: 'no_client' };
 
         const [statsResult, scoreResult, profileResult] = await Promise.all([
             client
@@ -345,29 +440,54 @@
         ]);
 
         if (statsResult.error || scoreResult.error || profileResult.error) {
-            const err = statsResult.error || scoreResult.error || profileResult.error;
-            if (statusEl) statusEl.textContent = err.message;
+            return {
+                ok: false,
+                error: statsResult.error || scoreResult.error || profileResult.error,
+            };
+        }
+
+        return {
+            ok: true,
+            stats: {
+                personalBest: scoreResult.data?.score ?? 0,
+                bestLevel: statsResult.data?.best_level ?? 1,
+                totalPlaySeconds: statsResult.data?.total_play_seconds ?? 0,
+                gamesPlayed: statsResult.data?.games_played ?? 0,
+                totalScore: statsResult.data?.total_score ?? 0,
+                bestCombo: statsResult.data?.best_combo ?? 0,
+            },
+            equippedSkinId: profileResult.data?.equipped_skin || 'default',
+        };
+    }
+
+    async function refresh() {
+        const client = getClient();
+        const targetUserId = viewingUserId || getUserId();
+        if (!client || !targetUserId) return;
+
+        if (statusEl) statusEl.textContent = 'Laster...';
+
+        const result = await fetchUserData(targetUserId);
+        if (!result.ok) {
+            if (statusEl) statusEl.textContent = result.error?.message || 'Kunne ikke laste profil.';
             return;
         }
 
-        stats = {
-            personalBest: scoreResult.data?.score ?? 0,
-            bestLevel: statsResult.data?.best_level ?? 1,
-            totalPlaySeconds: statsResult.data?.total_play_seconds ?? 0,
-            gamesPlayed: statsResult.data?.games_played ?? 0,
-            totalScore: statsResult.data?.total_score ?? 0,
-            bestCombo: statsResult.data?.best_combo ?? 0,
-        };
+        stats = result.stats;
+        equippedSkinId = result.equippedSkinId;
+        unlockedIds = computeUnlockedFromStats(stats);
 
-        equippedSkinId = profileResult.data?.equipped_skin || 'default';
+        if (isViewingSelf()) {
+            const previousUnlocked = new Set(ownUnlockedIds);
+            ownStats = { ...stats };
+            ownEquippedSkinId = equippedSkinId;
+            ownUnlockedIds = new Set(unlockedIds);
 
-        const previousUnlocked = unlockedIds;
-        unlockedIds = computeUnlocked();
-
-        if (baselineLoaded) {
-            announceNewUnlocks(previousUnlocked, unlockedIds);
+            if (baselineLoaded) {
+                announceNewUnlocks(previousUnlocked, ownUnlockedIds);
+            }
+            baselineLoaded = true;
         }
-        baselineLoaded = true;
 
         if (statusEl) statusEl.textContent = '';
         render();
@@ -375,19 +495,36 @@
 
     function openProfile() {
         if (!overlay) return;
+        viewingUserId = null;
+        viewingDisplayName = '';
+        overlay.classList.remove('hidden');
+        refresh();
+    }
+
+    function openUserProfile(userId, displayName) {
+        if (!overlay || !userId) return;
+        viewingUserId = userId;
+        viewingDisplayName = displayName || 'Spiller';
         overlay.classList.remove('hidden');
         refresh();
     }
 
     function closeProfile() {
         if (overlay) overlay.classList.add('hidden');
+        viewingUserId = null;
+        viewingDisplayName = '';
     }
 
     function reset() {
         stats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0, totalScore: 0, bestCombo: 0 };
         equippedSkinId = 'default';
         unlockedIds = new Set(['default']);
+        ownStats = { personalBest: 0, bestLevel: 1, totalPlaySeconds: 0, gamesPlayed: 0, totalScore: 0, bestCombo: 0 };
+        ownEquippedSkinId = 'default';
+        ownUnlockedIds = new Set(['default']);
         baselineLoaded = false;
+        viewingUserId = null;
+        viewingDisplayName = '';
         closeProfile();
     }
 
@@ -405,19 +542,25 @@
     });
 
     document.addEventListener('auth:changed', (e) => {
-        if (e.detail?.user) refresh();
-        else reset();
+        if (e.detail?.user) {
+            if (!viewingUserId || isViewingSelf()) refresh();
+        } else {
+            reset();
+        }
     });
 
-    document.addEventListener('stats:updated', () => refresh());
+    document.addEventListener('stats:updated', () => {
+        if (!viewingUserId || isViewingSelf()) refresh();
+    });
 
     window.Auth?.whenReady?.().then(() => {
-        if (window.Auth?.isLoggedIn()) refresh();
+        if (window.Auth?.isLoggedIn() && !viewingUserId) refresh();
     });
 
     window.Profile = {
         getEquippedSkinColors,
         refresh,
         open: openProfile,
+        openUser: openUserProfile,
     };
 })();

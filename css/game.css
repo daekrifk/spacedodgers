@@ -320,6 +320,26 @@ body {
     border: 1px solid var(--border);
 }
 
+.leaderboard-row-clickable {
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.leaderboard-row-clickable:hover {
+    background: rgba(34, 211, 238, 0.08);
+    border-color: rgba(34, 211, 238, 0.25);
+}
+
+.leaderboard-row-clickable:focus-visible {
+    outline: 2px solid rgba(34, 211, 238, 0.5);
+    outline-offset: 2px;
+}
+
+.leaderboard-row-own {
+    border-color: rgba(34, 211, 238, 0.35);
+    background: rgba(34, 211, 238, 0.06);
+}
+
 .leaderboard-rank {
     font-weight: 700;
     color: var(--muted);
@@ -951,6 +971,52 @@ kbd {
     color: var(--muted);
     margin: -0.35rem 0 0.75rem;
     line-height: 1.5;
+}
+
+.profile-stats-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.profile-stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.profile-stats-label {
+    color: var(--muted);
+}
+
+.profile-stats-value {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--text);
+    text-align: right;
+}
+
+.profile-equipped-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.profile-equipped-name {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
 }
 
 .badge-grid {

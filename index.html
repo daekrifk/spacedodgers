@@ -148,18 +148,26 @@
     <div class="profile-overlay hidden" id="profile-overlay">
         <div class="profile-modal">
             <div class="profile-modal-header">
-                <h2 class="panel-title">Min profil</h2>
+                <h2 class="panel-title" id="profile-title">Min profil</h2>
                 <button class="btn-icon" id="profile-close-btn" type="button" title="Lukk">✕</button>
             </div>
             <p class="profile-status" id="profile-status"></p>
+            <section class="profile-section" id="profile-stats-section">
+                <h3 class="profile-subtitle">Statistikk</h3>
+                <div class="profile-stats-grid" id="profile-stats-grid"></div>
+            </section>
             <section class="profile-section">
                 <h3 class="profile-subtitle">Badges</h3>
                 <div class="badge-grid" id="badge-grid"></div>
             </section>
-            <section class="profile-section">
+            <section class="profile-section" id="profile-skins-section">
                 <h3 class="profile-subtitle">Skip-farge</h3>
-                <p class="profile-hint">Lås opp badges for å få nye farger. Klikk for å ta i bruk.</p>
+                <p class="profile-hint" id="profile-skins-hint">Lås opp badges for å få nye farger. Klikk for å ta i bruk.</p>
                 <div class="skin-grid" id="skin-grid"></div>
+            </section>
+            <section class="profile-section hidden" id="profile-equipped-section">
+                <h3 class="profile-subtitle">Utstyrt skip</h3>
+                <div class="profile-equipped-chip" id="profile-equipped-chip"></div>
             </section>
         </div>
     </div>
