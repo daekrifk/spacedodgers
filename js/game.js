@@ -63,6 +63,13 @@
         { id: 'underSiege', name: 'Under Siege', good: false, color: '#ef4444', duration: 600 },
     ];
     const JOKER_SLOWMO_SCALE = 0.55;
+    const JOKER_STAR = {
+        core: '#d946ef',
+        mid: '#a21caf',
+        edge: '#4ade80',
+        glow: '#e879f9',
+        halo: '#86efac',
+    };
 
     const keys = { up: false, down: false, left: false, right: false };
 
@@ -1008,19 +1015,19 @@
                 const blink = 0.55 + Math.abs(Math.sin(s.pulse * 1.4)) * 0.45;
                 ctx.globalAlpha = blink;
 
-                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-                grad.addColorStop(0, '#fde047');
-                grad.addColorStop(0.55, '#c084fc');
-                grad.addColorStop(1, '#7c3aed');
-                ctx.shadowColor = '#fde047';
-                ctx.shadowBlur = 14 + Math.abs(Math.sin(s.pulse * 1.4)) * 18;
-                ctx.fillStyle = grad;
+                ctx.shadowColor = JOKER_STAR.glow;
+                ctx.shadowBlur = 16 + Math.abs(Math.sin(s.pulse * 1.4)) * 22;
 
                 ctx.beginPath();
-                ctx.arc(0, 0, r * 1.35, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(192, 132, 252, ${0.12 + blink * 0.18})`;
+                ctx.arc(0, 0, r * 1.45, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(74, 222, 128, ${0.15 + blink * 0.22})`;
                 ctx.fill();
 
+                const grad = ctx.createRadialGradient(-r * 0.25, -r * 0.25, 0, 0, 0, r);
+                grad.addColorStop(0, '#fdf4ff');
+                grad.addColorStop(0.3, JOKER_STAR.core);
+                grad.addColorStop(0.72, JOKER_STAR.mid);
+                grad.addColorStop(1, JOKER_STAR.edge);
                 ctx.fillStyle = grad;
             } else {
                 const info = POWERUP_INFO[s.type];
@@ -1042,8 +1049,15 @@
             ctx.closePath();
             ctx.fill();
 
-            ctx.globalAlpha = isJoker ? 0.7 + Math.abs(Math.sin(s.pulse * 1.4)) * 0.3 : 1;
-            ctx.fillStyle = isJoker ? '#fff' : 'rgba(255,255,255,0.85)';
+            ctx.globalAlpha = isJoker ? 0.85 + Math.abs(Math.sin(s.pulse * 1.4)) * 0.15 : 1;
+            if (isJoker) {
+                ctx.fillStyle = '#ecfccb';
+                ctx.strokeStyle = JOKER_STAR.mid;
+                ctx.lineWidth = 1.5;
+                ctx.strokeText('?', 0, 1);
+            } else {
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            }
             ctx.font = isJoker ? 'bold 11px sans-serif' : 'bold 10px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
