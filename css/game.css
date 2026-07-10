@@ -576,6 +576,15 @@ body {
     color: #fef3c7 !important;
 }
 
+.joker-badge-good {
+    box-shadow: 0 0 8px rgba(252, 211, 77, 0.35);
+}
+
+.joker-badge-bad {
+    animation: powerup-blink 0.7s ease-in-out infinite;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.35);
+}
+
 @keyframes powerup-pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.65; transform: scale(1.04); }

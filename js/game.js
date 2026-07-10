@@ -54,6 +54,16 @@
         godmode: { label: 'God Mode', color: '#fcd34d', duration: GODMODE_DURATION },
     };
 
+    const JOKER_EFFECTS = [
+        { id: 'goldRush', name: 'Gullrush', good: true, color: '#fcd34d', duration: 720 },
+        { id: 'jackpot', name: 'Jackpot', good: true, color: '#fde047', instant: true },
+        { id: 'slowMo', name: 'Bullet Time', good: true, color: '#67e8f9', duration: 240 },
+        { id: 'bulk', name: 'Bulk', good: false, color: '#f97316', duration: 600 },
+        { id: 'flipFlop', name: 'Flip Flop', good: false, color: '#c084fc', duration: 360 },
+        { id: 'underSiege', name: 'Under Siege', good: false, color: '#ef4444', duration: 600 },
+    ];
+    const JOKER_SLOWMO_SCALE = 0.55;
+
     const keys = { up: false, down: false, left: false, right: false };
 
     let state = 'menu';
@@ -64,6 +74,8 @@
     let lastTime = 0;
     let spawnTimer = 0;
     let starSpawnTimer = 0;
+    let jokerSpawnTimer = 0;
+    let underSiegeSpawnTimer = 0;
     let wallCampFrames = 0;
     let player = null;
     let obstacles = [];
@@ -79,6 +91,7 @@
     let comboTimer = 0;
     let bestComboThisRun = 0;
     let timeScale = 1;
+    let jokerTimers = { goldRush: 0, slowMo: 0, bulk: 0, flipFlop: 0, underSiege: 0 };
 
     function getTheme() {
         return LEVEL_THEMES[Math.min(level - 1, LEVEL_THEMES.length - 1)];
@@ -150,7 +163,26 @@
 
     function getPlayerSize() {
         if (hasShrink()) return BASE_PLAYER_SIZE * 0.62;
+        if (jokerTimers.bulk > 0) return BASE_PLAYER_SIZE * 1.35;
         return BASE_PLAYER_SIZE;
+    }
+
+    function getActiveJokerEffects() {
+        return JOKER_EFFECTS.filter((e) => !e.instant && jokerTimers[e.id] > 0);
+    }
+
+    function updateJokerTimers(dt) {
+        for (const effect of JOKER_EFFECTS) {
+            if (effect.instant) continue;
+            if (jokerTimers[effect.id] > 0) {
+                jokerTimers[effect.id] -= dt;
+                if (jokerTimers[effect.id] <= 0) {
+                    jokerTimers[effect.id] = 0;
+                    if (effect.id === 'underSiege') underSiegeSpawnTimer = 0;
+                    if (effect.id === 'bulk') player.size = getPlayerSize();
+                }
+            }
+        }
     }
 
     function getActivePowerupTypes() {
@@ -210,6 +242,9 @@
         comboTimer = 0;
         bestComboThisRun = 0;
         timeScale = 1;
+        jokerTimers = { goldRush: 0, slowMo: 0, bulk: 0, flipFlop: 0, underSiege: 0 };
+        jokerSpawnTimer = 0;
+        underSiegeSpawnTimer = 0;
         resetPlayer();
         updateHud();
         updateComboHud();
@@ -222,13 +257,14 @@
     function updatePowerupHud() {
         if (!powerupBadgesEl) return;
         const active = getActivePowerupTypes();
+        const jokerActive = getActiveJokerEffects();
 
-        if (active.length === 0) {
+        if (active.length === 0 && jokerActive.length === 0) {
             powerupBadgesEl.innerHTML = '';
             return;
         }
 
-        powerupBadgesEl.innerHTML = active.map((type) => {
+        const powerupHtml = active.map((type) => {
             const info = POWERUP_INFO[type];
             const secs = Math.max(1, Math.ceil(powerupTimers[type] / 60));
             const warnClass = isPowerupCritical(type)
@@ -239,6 +275,14 @@
 
             return `<span class="powerup-badge${warnClass}" style="background:${info.color}22;color:${info.color};border-color:${info.color}55">${info.label} ${secs}s</span>`;
         }).join('');
+
+        const jokerHtml = jokerActive.map((effect) => {
+            const secs = Math.max(1, Math.ceil(jokerTimers[effect.id] / 60));
+            const cls = effect.good ? ' joker-badge-good' : ' joker-badge-bad';
+            return `<span class="powerup-badge${cls}" style="background:${effect.color}22;color:${effect.color};border-color:${effect.color}55">${effect.name} ${secs}s</span>`;
+        }).join('');
+
+        powerupBadgesEl.innerHTML = powerupHtml + jokerHtml;
     }
 
     function showFloatText(text, color) {
@@ -380,6 +424,35 @@
         updatePowerupHud();
     }
 
+    function activateJoker() {
+        const effect = JOKER_EFFECTS[Math.floor(Math.random() * JOKER_EFFECTS.length)];
+
+        if (effect.instant) {
+            score += 400;
+            showFloatText('+400', effect.color);
+        } else {
+            jokerTimers[effect.id] = effect.duration;
+            if (effect.id === 'underSiege') underSiegeSpawnTimer = 0;
+        }
+
+        showFloatText('JOKER: ' + effect.name, effect.color);
+        player.size = getPlayerSize();
+        spawnParticles(player.x, player.y, effect.color, 30);
+        shake = 5;
+
+        if (effect.good) {
+            flashScreen('#4ade80', 0.2);
+            crushRings.push({ x: player.x, y: player.y, radius: 18, life: 1, color: effect.color });
+            window.Sfx?.jokerGood?.();
+        } else {
+            flashScreen('#ef4444', 0.22);
+            crushRings.push({ x: player.x, y: player.y, radius: 22, life: 0.9, color: '#ef4444' });
+            window.Sfx?.jokerBad?.();
+        }
+
+        updatePowerupHud();
+    }
+
     function canPlay() {
         return window.Auth?.isLoggedIn() ?? false;
     }
@@ -473,7 +546,7 @@
         return margin + Math.random() * Math.max(0, maxX - margin);
     }
 
-    function spawnObstacle(forceSide) {
+    function buildObstacle(forceSide, fromBottom) {
         const theme = getTheme();
         const type = pickObstacleType();
         const mult = getSpeedMultiplier();
@@ -500,16 +573,25 @@
 
         w = Math.min(w, canvas.width - 40);
 
-        obstacles.push({
+        return {
             x: getSpawnX(w, forceSide),
-            y: -h - 10,
+            y: fromBottom ? canvas.height + h + 10 : -h - 10,
             w,
             h,
             speed,
-            color: theme.obstacle,
+            color: fromBottom ? '#ef4444' : theme.obstacle,
             rot: Math.random() * Math.PI * 2,
             rotSpeed: (Math.random() - 0.5) * 0.06,
-        });
+            direction: fromBottom ? -1 : 1,
+        };
+    }
+
+    function spawnObstacle(forceSide) {
+        obstacles.push(buildObstacle(forceSide, false));
+    }
+
+    function spawnObstacleFromBottom() {
+        obstacles.push(buildObstacle(null, true));
     }
 
     function spawnPowerupStar() {
@@ -521,6 +603,19 @@
             size,
             speed: 2.0 + Math.random() * 0.8,
             type,
+            rot: 0,
+            pulse: Math.random() * Math.PI * 2,
+        });
+    }
+
+    function spawnJokerStar() {
+        const size = 24;
+        powerups.push({
+            x: 40 + Math.random() * (canvas.width - 80),
+            y: -size - 10,
+            size,
+            speed: 2.0 + Math.random() * 0.8,
+            type: 'joker',
             rot: 0,
             pulse: Math.random() * Math.PI * 2,
         });
@@ -611,7 +706,10 @@
 
         const camping = isWallCamping();
         const scoreRate = 0.45;
-        score += dt * scoreRate * getComboMultiplier();
+        const goldMult = jokerTimers.goldRush > 0 ? 2 : 1;
+        score += dt * scoreRate * getComboMultiplier() * goldMult;
+
+        updateJokerTimers(dt);
 
         if (comboTimer > 0) {
             comboTimer -= dt;
@@ -667,6 +765,7 @@
         let dy = 0;
         if (keys.left) dx -= 1;
         if (keys.right) dx += 1;
+        if (jokerTimers.flipFlop > 0) dx *= -1;
         if (keys.up) dy -= 1;
         if (keys.down) dy += 1;
 
@@ -706,14 +805,32 @@
                 spawnPowerupStar();
                 starSpawnTimer = 0;
             }
+
+            jokerSpawnTimer++;
+            if (jokerSpawnTimer >= starInterval * 2) {
+                spawnJokerStar();
+                jokerSpawnTimer = 0;
+            }
+
+            if (jokerTimers.underSiege > 0) {
+                underSiegeSpawnTimer += dt;
+                if (underSiegeSpawnTimer >= 55) {
+                    spawnObstacleFromBottom();
+                    underSiegeSpawnTimer = 0;
+                }
+            }
         }
 
         for (let i = obstacles.length - 1; i >= 0; i--) {
             const o = obstacles[i];
-            o.y += o.speed * dt;
+            const dir = o.direction ?? 1;
+            o.y += dir * o.speed * dt;
             o.rot += o.rotSpeed * dt;
 
-            if (o.y > canvas.height + 50) {
+            const passedTop = dir === 1 && o.y > canvas.height + 50;
+            const passedBottom = dir === -1 && o.y + o.h < -50;
+
+            if (passedTop || passedBottom) {
                 obstacles.splice(i, 1);
                 score += getComboMultiplier();
             } else if (circleRotatedRectOverlap(player.x, player.y, player.size * 0.85, o)) {
@@ -758,8 +875,12 @@
             } else if (circleCircleOverlap(
                 player.x, player.y, player.size * 1.1,
                 s.x, s.y, s.size * 1.3
-            )) {
-                activatePowerup(s.type);
+            )            ) {
+                if (s.type === 'joker') {
+                    activateJoker();
+                } else {
+                    activatePowerup(s.type);
+                }
                 powerups.splice(i, 1);
             }
         }
@@ -870,7 +991,6 @@
 
     function drawPowerups() {
         for (const s of powerups) {
-            const info = POWERUP_INFO[s.type];
             const pulse = 1 + Math.sin(s.pulse) * 0.15;
             const r = s.size * pulse;
 
@@ -878,9 +998,21 @@
             ctx.translate(s.x, s.y);
             ctx.rotate(s.rot);
 
-            ctx.shadowColor = info.color;
-            ctx.shadowBlur = 16;
-            ctx.fillStyle = info.color;
+            if (s.type === 'joker') {
+                const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+                grad.addColorStop(0, '#fde047');
+                grad.addColorStop(0.55, '#c084fc');
+                grad.addColorStop(1, '#7c3aed');
+                ctx.shadowColor = '#c084fc';
+                ctx.shadowBlur = 20;
+                ctx.fillStyle = grad;
+            } else {
+                const info = POWERUP_INFO[s.type];
+                ctx.shadowColor = info.color;
+                ctx.shadowBlur = 16;
+                ctx.fillStyle = info.color;
+            }
+
             ctx.beginPath();
             for (let i = 0; i < 5; i++) {
                 const angle = (i * Math.PI * 2) / 5 - Math.PI / 2;
@@ -894,11 +1026,17 @@
             ctx.closePath();
             ctx.fill();
 
-            ctx.fillStyle = 'rgba(255,255,255,0.7)';
-            ctx.font = 'bold 9px sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.font = 'bold 10px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            const icon = s.type === 'shield' ? '🛡' : s.type === 'shrink' ? '◆' : '★';
+            const icon = s.type === 'joker'
+                ? '?'
+                : s.type === 'shield'
+                    ? '🛡'
+                    : s.type === 'shrink'
+                        ? '◆'
+                        : '★';
             ctx.fillText(icon, 0, 1);
 
             ctx.restore();
@@ -1272,8 +1410,12 @@
         const clampedDt = Math.min(Math.max(rawDt, 0), 2);
         lastTime = timestamp;
 
-        timeScale += (1 - timeScale) * 0.08;
-        if (timeScale > 0.995) timeScale = 1;
+        if (jokerTimers.slowMo > 0) {
+            timeScale = JOKER_SLOWMO_SCALE;
+        } else {
+            timeScale += (1 - timeScale) * 0.08;
+            if (timeScale > 0.995) timeScale = 1;
+        }
 
         update(clampedDt * timeScale);
         draw();

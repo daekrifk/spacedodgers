@@ -75,6 +75,30 @@
         osc.stop(now + 0.32);
     }
 
+    function jokerGood() {
+        const base = 523.25;
+        [0, 4, 7].forEach((semi, i) => {
+            setTimeout(() => blip(base * Math.pow(2, semi / 12), 0.14, 'triangle', 0.07), i * 50);
+        });
+    }
+
+    function jokerBad() {
+        const audio = ensureCtx();
+        if (!audio) return;
+        const now = audio.currentTime;
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(90, now + 0.35);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+        osc.connect(gain);
+        gain.connect(audio.destination);
+        osc.start(now);
+        osc.stop(now + 0.4);
+    }
+
     function renderToggle() {
         if (!toggleBtn) return;
         toggleBtn.textContent = muted ? '🔇' : '🔊';
@@ -97,6 +121,8 @@
         nearMiss,
         comboMilestone,
         comboLost,
+        jokerGood,
+        jokerBad,
         isMuted: () => muted,
     };
 })();
